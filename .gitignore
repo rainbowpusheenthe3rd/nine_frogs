@@ -1,0 +1,7 @@
+.venv/
+.uv/
+__pycache__/
+*.pyc
+
+
+Plan and Parts.txt
