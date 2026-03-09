@@ -2,6 +2,27 @@
 .uv/
 __pycache__/
 *.pyc
+*.pyo
 
+# secrets & keys
+*.pub
+*.pem
+*.key
+rainbow_frog
+frog_security.txt
 
-Plan and Parts.txt
+# env files (example is committed, actual is not)
+.env
+
+# app runtime
+.cache/
+*.pkl
+ninefrogs/.cache/
+
+# editor
+.vscode/
+.idea/
+
+# python packaging
+dist/
+*.egg-info/

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Nine Frogs{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js" defer></script>
+  <link rel="stylesheet" href="/static/css/theme.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <span class="logo-frog">🐸</span>
+        <span class="logo-text rainbow-text">Nine Frogs</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/" class="nav-link">New Research</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>🐸 Nine Frogs — Deep Research Flashcard Engine</span>
+    </div>
+  </footer>
+
+  <script src="/static/js/shortcuts.js" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

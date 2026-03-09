@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Syllabus: {{ session.topic }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Review Syllabus</h1>
+  <span class="topic-pill">{{ session.topic }}</span>
+</div>
+
+<p class="review-hint">
+  Accept or reject each section. Accepted sections will have flashcards generated for them.
+  You can also inline-edit the title or summary before accepting.
+</p>
+
+<div class="sections-grid">
+  {% for sec in sections %}
+  <div class="card section-card" id="sc-{{ sec.id }}" data-status="{{ sec.status }}">
+
+    <div class="section-number">{{ loop.index }}</div>
+
+    <div class="section-body">
+      <h3 class="section-title">{{ sec.title }}</h3>
+      <p class="section-summary">{{ sec.summary }}</p>
+
+      <details class="section-details">
+        <summary class="details-toggle">Learning Objectives &amp; Concepts</summary>
+        <ul class="objectives-list">
+          {% for obj in sec.learning_objectives %}
+          <li>{{ obj }}</li>
+          {% endfor %}
+        </ul>
+        <div class="concepts-row">
+          {% for c in sec.key_concepts %}
+          <span class="tag">{{ c }}</span>
+          {% endfor %}
+        </div>
+      </details>
+
+      <!-- inline edit form (hidden by default) -->
+      <form
+        id="edit-form-{{ sec.id }}"
+        class="edit-form"
+        style="display:none"
+        hx-post="/syllabus/section/{{ sec.id }}/edit"
+        hx-target="#status-{{ sec.id }}"
+        hx-swap="innerHTML"
+      >
+        <label>Title
+          <input type="text" name="title" value="{{ sec.title }}" class="edit-input">
+        </label>
+        <label>Summary
+          <textarea name="summary" class="edit-textarea" rows="3">{{ sec.summary }}</textarea>
+        </label>
+        <div class="edit-actions">
+          <button type="submit" class="btn btn-success btn-sm">Save &amp; Accept</button>
+          <button type="button" class="btn btn-ghost btn-sm"
+            onclick="document.getElementById('edit-form-{{ sec.id }}').style.display='none'">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section-footer">
+      <div class="section-actions">
+        <button
+          class="btn btn-success btn-sm"
+          hx-post="/syllabus/section/{{ sec.id }}/accept"
+          hx-target="#status-{{ sec.id }}"
+          hx-swap="innerHTML"
+        >✓ Accept</button>
+
+        <button
+          class="btn btn-ghost btn-sm"
+          onclick="document.getElementById('edit-form-{{ sec.id }}').style.display='block'"
+        >✎ Edit</button>
+
+        <button
+          class="btn btn-danger btn-sm"
+          hx-post="/syllabus/section/{{ sec.id }}/reject"
+          hx-target="#status-{{ sec.id }}"
+          hx-swap="innerHTML"
+        >✗ Reject</button>
+      </div>
+
+      <span id="status-{{ sec.id }}" class="status-badge
+        {% if sec.status == 'accepted' %}accepted
+        {% elif sec.status == 'rejected' %}rejected
+        {% endif %}">
+        {% if sec.status == 'accepted' %}✓ Accepted
+        {% elif sec.status == 'rejected' %}✗ Rejected
+        {% endif %}
+      </span>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+<div class="generate-bar">
+  <form action="/syllabus/{{ session.id }}/generate-cards" method="post">
+    <button type="submit" class="btn btn-primary btn-large">
+      Generate Flashcards for Accepted Sections →
+    </button>
+  </form>
+</div>
+{% endblock %}

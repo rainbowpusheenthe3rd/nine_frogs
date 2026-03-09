@@ -1,7 +1,46 @@
 [project]
 name = "ninefrogs"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered flashcard generation with deep research"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    # Web framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "jinja2>=3.1.4",
+    "python-multipart>=0.0.12",
+    # LLM providers (openai SDK works for both Ollama and OpenAI)
+    "openai>=1.54.0",
+    "anthropic>=0.40.0",
+    # Embeddings (sentence-transformers pulls torch; runs on CPU by default)
+    "sentence-transformers>=3.3.0",
+    # Database
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "pgvector>=0.3.6",
+    "alembic>=1.14.0",
+    # Config
+    "pydantic-settings>=2.6.0",
+    "python-dotenv>=1.0.1",
+    # Knowledge / retrieval
+    "rank-bm25>=0.2.2",
+    "networkx>=3.4.2",
+    "datasets>=3.1.0",
+    "huggingface-hub>=0.26.0",
+    # Web crawler
+    "httpx>=0.28.0",
+    "beautifulsoup4>=4.12.3",
+    "lxml>=5.3.0",
+    # Utilities
+    "numpy>=2.1.0",
+    "tenacity>=9.0.0",
+    "aiofiles>=24.1.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.8.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]

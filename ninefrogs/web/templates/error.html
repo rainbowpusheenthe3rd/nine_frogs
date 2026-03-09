@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error — Nine Frogs{% endblock %}
+{% block content %}
+<div class="card error-card">
+  <div class="error-icon">🐸</div>
+  <h2>Something went wrong</h2>
+  <p class="error-msg">{{ msg }}</p>
+  <a href="/" class="btn btn-primary">← Back Home</a>
+</div>
+{% endblock %}

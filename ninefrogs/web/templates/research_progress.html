@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Researching: {{ session.topic }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Researching</h1>
+  <span class="topic-pill">{{ session.topic }}</span>
+</div>
+
+<div class="card research-card">
+  <div class="research-status-bar">
+    <span class="pulse-dot"></span>
+    <span id="status-text" class="status-text">Connecting…</span>
+  </div>
+
+  <div id="event-log" class="event-log" role="log" aria-live="polite">
+    <!-- SSE events appended here -->
+  </div>
+
+  <div id="done-banner" class="done-banner" style="display:none;">
+    <span class="done-icon">✓</span>
+    Syllabus ready — redirecting…
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SESSION_ID = "{{ session.id }}";
+const log        = document.getElementById("event-log");
+const statusText = document.getElementById("status-text");
+const doneBanner = document.getElementById("done-banner");
+
+const ICONS = {
+  status:      "◉",
+  query:       "⟳",
+  retrieved:   "◎",
+  synthesising:"⧖",
+  done:        "✓",
+  error:       "✗",
+};
+
+function appendLog(cls, html) {
+  const el = document.createElement("div");
+  el.className = `log-item ${cls}`;
+  el.innerHTML = html;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+const source = new EventSource(`/research/${SESSION_ID}/stream`);
+
+source.onmessage = (e) => {
+  const d = JSON.parse(e.data);
+  const icon = ICONS[d.type] || "·";
+
+  if (d.type === "status") {
+    statusText.textContent = d.message;
+    appendLog("log-status", `<span class="log-icon">${icon}</span> ${d.message}`);
+
+  } else if (d.type === "query") {
+    appendLog("log-query",
+      `<span class="log-icon">${icon}</span> <span class="log-label">SEARCH</span> ${d.query}`);
+
+  } else if (d.type === "retrieved") {
+    appendLog("log-retrieved",
+      `<span class="log-icon">${icon}</span> <span class="log-label">FOUND</span> `+
+      `<strong>${d.count}</strong> passages`);
+
+  } else if (d.type === "done") {
+    statusText.textContent = "Complete";
+    doneBanner.style.display = "flex";
+    source.close();
+    setTimeout(() => { window.location.href = `/syllabus/${SESSION_ID}`; }, 1800);
+
+  } else if (d.type === "error") {
+    statusText.textContent = "Error";
+    appendLog("log-error",
+      `<span class="log-icon">✗</span> ${d.message}`);
+    source.close();
+  }
+};
+
+source.onerror = () => {
+  statusText.textContent = "Connection lost — reload to retry";
+};
+</script>
+{% endblock %}

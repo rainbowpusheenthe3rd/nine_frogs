@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Review Cards{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Card Review</h1>
+  <div class="progress-row">
+    <div class="progress-track">
+      <div class="progress-fill"
+        style="width: {{ ((approved / total * 100) if total else 0)|round|int }}%">
+      </div>
+    </div>
+    <span class="progress-label">
+      {{ approved }} approved · {{ rejected }} rejected · {{ pending }} pending
+    </span>
+  </div>
+</div>
+
+{% if card %}
+<div class="card-review-wrap">
+  {% if section %}
+  <div class="card-section-label">
+    <span class="tag">{{ section.title }}</span>
+  </div>
+  {% endif %}
+
+  <div class="flashcard" id="flashcard">
+    <div class="fc-front">
+      <div class="fc-side-label">QUESTION</div>
+      <div class="fc-content">{{ card.front }}</div>
+    </div>
+    <div class="fc-divider"></div>
+    <div class="fc-back">
+      <div class="fc-side-label">ANSWER</div>
+      <div class="fc-content">{{ card.back }}</div>
+      {% if card.hint %}
+      <div class="fc-hint">💡 {{ card.hint }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if card.tags %}
+  <div class="card-tags">
+    {% for tag in card.tags %}
+    <span class="tag">{{ tag }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card-actions">
+    <button
+      id="btn-approve"
+      class="btn btn-success btn-large"
+      hx-post="/cards/{{ card.id }}/approve"
+      hx-on::after-request="nextCard()"
+    >
+      ✓ Approve <kbd>A</kbd>
+    </button>
+    <button
+      id="btn-reject"
+      class="btn btn-danger btn-large"
+      hx-post="/cards/{{ card.id }}/reject"
+      hx-on::after-request="nextCard()"
+    >
+      ✗ Reject <kbd>R</kbd>
+    </button>
+  </div>
+
+  <p class="shortcut-hint">Keyboard shortcuts: <kbd>A</kbd> approve · <kbd>R</kbd> reject</p>
+</div>
+
+{% else %}
+<div class="card all-done-card">
+  <div class="all-done-icon">🎉</div>
+  <h2>All cards reviewed!</h2>
+  <p><strong>{{ approved }}</strong> cards approved and ready for Anki.</p>
+  <a href="/anki/export/{{ session_id }}" class="btn btn-primary btn-large">
+    Export to Anki →
+  </a>
+</div>
+{% endif %}
+
+{% if pending > 0 %}
+<p class="generating-note" id="gen-note" style="display:none">
+  ⧖ Cards are still being generated — this page will refresh automatically.
+</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function nextCard() {
+  setTimeout(() => window.location.reload(), 350);
+}
+
+// If cards are still generating, auto-refresh every 5 s
+const pending = {{ pending }};
+const total   = {{ total }};
+if (total === 0 || (pending === 0 && {{ approved }} === 0 && {{ rejected }} === 0)) {
+  const note = document.getElementById("gen-note");
+  if (note) { note.style.display = "block"; }
+  setTimeout(() => window.location.reload(), 5000);
+}
+</script>
+{% endblock %}

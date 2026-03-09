@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Nine Frogs — AI Flashcard Research Engine{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-frogs" aria-hidden="true">🐸&thinsp;🦎&thinsp;🐸</div>
+  <h1 class="hero-title rainbow-text">Nine Frogs</h1>
+  <p class="hero-sub">Deep research → Syllabus → Targeted flashcards → Anki</p>
+</section>
+
+<div class="card research-form-card">
+  <h2 class="card-title">Start Research</h2>
+  <form action="/start" method="post" class="research-form">
+    <div class="input-row">
+      <input
+        type="text"
+        name="topic"
+        class="topic-input"
+        placeholder="e.g. Transformer Architecture, Roman History, Calculus…"
+        required
+        autofocus
+        maxlength="200"
+      >
+      <button type="submit" class="btn btn-primary">
+        Research <span class="btn-arrow">→</span>
+      </button>
+    </div>
+    <p class="input-hint">
+      The LLM will iteratively search Wikipedia and generate a syllabus for your review.
+    </p>
+  </form>
+</div>
+
+{% if sessions %}
+<section class="recent-section">
+  <h3 class="section-heading">Recent Sessions</h3>
+  <div class="sessions-grid">
+    {% for s in sessions %}
+    <a
+      href="{% if s.status == 'done' or s.status == 'generating_cards' %}/syllabus/{{ s.id }}{% elif s.status == 'running' %}/research/{{ s.id }}{% else %}/syllabus/{{ s.id }}{% endif %}"
+      class="session-card status-{{ s.status }}"
+    >
+      <span class="session-topic">{{ s.topic }}</span>
+      <div class="session-meta">
+        <span class="badge badge-{{ s.status }}">{{ s.status }}</span>
+        <span class="session-date">{{ s.created_at.strftime('%b %d  %H:%M') }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
