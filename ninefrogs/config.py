@@ -27,7 +27,13 @@ class Settings(BaseSettings):
     anki_default_deck: str = "Nine Frogs"
 
     # ── Wikipedia ─────────────────────────────────────────────────────────────
-    wiki_dataset: str = "NeuML/txtai-wikipedia-slim"
+    # Source: Simple English Wikipedia dump, downloaded directly from Wikimedia.
+    # Set WIKI_ENABLED=false to skip entirely.
+    wiki_dump_url: str = (
+        "https://dumps.wikimedia.org/simplewiki/latest/"
+        "simplewiki-latest-pages-articles.xml.bz2"
+    )
+    wiki_max_articles: int = 100_000
     wiki_cache_dir: str = ".cache"
     wiki_enabled: bool = True
 

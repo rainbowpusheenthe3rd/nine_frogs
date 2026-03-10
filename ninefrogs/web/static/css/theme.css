@@ -510,6 +510,71 @@ label { display: block; margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--
 }
 .done-icon { font-size: 1.2rem; }
 
+/* ── article pills (retrieved source titles) ──────────────── */
+.article-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.article-pill {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 176, 255, 0.1);
+  border: 1px solid rgba(0, 176, 255, 0.25);
+  color: var(--blue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 20ch;
+}
+
+/* ── LLM streaming panel ──────────────────────────────────── */
+.llm-panel {
+  margin-top: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(213, 0, 249, 0.25);
+  background: rgba(213, 0, 249, 0.04);
+  overflow: hidden;
+}
+.llm-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid rgba(213, 0, 249, 0.15);
+  font-size: 0.78rem;
+  color: var(--purple);
+  font-family: var(--font-mono);
+}
+.llm-panel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--purple);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.llm-panel-dot.done {
+  animation: none;
+  background: var(--green);
+}
+.llm-panel-label { opacity: 0.85; }
+.llm-stream {
+  margin: 0;
+  padding: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: rgba(213, 0, 249, 0.9);
+  line-height: 1.6;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(213, 0, 249, 0.3) transparent;
+}
+
 /* ── syllabus review ──────────────────────────────────────── */
 .review-hint {
   color: var(--text-muted);

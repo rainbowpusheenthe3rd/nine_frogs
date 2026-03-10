@@ -17,6 +17,15 @@
     <!-- SSE events appended here -->
   </div>
 
+  <!-- LLM streaming panel — hidden until first token arrives -->
+  <div id="llm-panel" class="llm-panel" style="display:none;">
+    <div class="llm-panel-header">
+      <span class="llm-panel-dot"></span>
+      <span id="llm-panel-label" class="llm-panel-label">LLM reasoning…</span>
+    </div>
+    <pre id="llm-stream" class="llm-stream"></pre>
+  </div>
+
   <div id="done-banner" class="done-banner" style="display:none;">
     <span class="done-icon">✓</span>
     Syllabus ready — redirecting…
@@ -30,14 +39,16 @@ const SESSION_ID = "{{ session.id }}";
 const log        = document.getElementById("event-log");
 const statusText = document.getElementById("status-text");
 const doneBanner = document.getElementById("done-banner");
+const llmPanel   = document.getElementById("llm-panel");
+const llmStream  = document.getElementById("llm-stream");
+const llmLabel   = document.getElementById("llm-panel-label");
 
 const ICONS = {
-  status:      "◉",
-  query:       "⟳",
-  retrieved:   "◎",
-  synthesising:"⧖",
-  done:        "✓",
-  error:       "✗",
+  status:    "◉",
+  query:     "⟳",
+  retrieved: "◎",
+  done:      "✓",
+  error:     "✗",
 };
 
 function appendLog(cls, html) {
@@ -63,9 +74,28 @@ source.onmessage = (e) => {
       `<span class="log-icon">${icon}</span> <span class="log-label">SEARCH</span> ${d.query}`);
 
   } else if (d.type === "retrieved") {
+    let titlesHtml = "";
+    if (d.titles && d.titles.length) {
+      const items = d.titles.map(t => `<span class="article-pill">${t}</span>`).join(" ");
+      titlesHtml = `<div class="article-pills">${items}</div>`;
+    }
     appendLog("log-retrieved",
       `<span class="log-icon">${icon}</span> <span class="log-label">FOUND</span> `+
-      `<strong>${d.count}</strong> passages`);
+      `<strong>${d.count}</strong> passages${titlesHtml}`);
+
+  } else if (d.type === "stream_start") {
+    llmStream.textContent = "";
+    llmLabel.textContent = d.label || "LLM reasoning…";
+    llmPanel.style.display = "block";
+    log.scrollTop = log.scrollHeight;
+
+  } else if (d.type === "token") {
+    llmStream.textContent += d.text;
+    llmStream.scrollTop = llmStream.scrollHeight;
+
+  } else if (d.type === "stream_end") {
+    llmLabel.textContent = "LLM reasoning — done";
+    llmPanel.querySelector(".llm-panel-dot").classList.add("done");
 
   } else if (d.type === "done") {
     statusText.textContent = "Complete";

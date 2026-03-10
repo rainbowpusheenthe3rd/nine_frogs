@@ -129,7 +129,8 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
             await _emit(session_id, "query", query=query)
             chunks = await hybrid_search(query, session_id, db, top_k=8)
             all_chunks.extend(chunks)
-            await _emit(session_id, "retrieved", query=query, count=len(chunks))
+            titles = [c.title for c in chunks if c.title][:5]
+            await _emit(session_id, "retrieved", query=query, count=len(chunks), titles=titles)
             await asyncio.sleep(0)  # yield to event loop
 
     # Deduplicate and rank by RRF score
@@ -140,6 +141,36 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
     await _emit(session_id, "status", message="Synthesising syllabus…")
 
     context = _format_context(all_chunks[:_TOP_CHUNKS])
+
+    # Stream a reasoning preview before JSON generation
+    try:
+        await _emit(session_id, "stream_start", label="LLM reasoning…")
+        reasoning_tokens: list[str] = []
+        stream_iter = llm.complete(
+            messages=[
+                {"role": "system", "content": SYLLABUS_SYSTEM},
+                {
+                    "role": "user",
+                    "content": (
+                        syllabus_user(topic, context)
+                        + "\n\nFirst, briefly explain your reasoning for the syllabus "
+                        "structure (2-3 sentences). Then produce the JSON."
+                    ),
+                },
+            ],
+            temperature=0.3,
+            stream=True,
+        )
+        # stream_iter may be a coroutine returning an async iterator
+        if asyncio.iscoroutine(stream_iter):
+            stream_iter = await stream_iter
+        async for token in stream_iter:
+            reasoning_tokens.append(token)
+            await _emit(session_id, "token", text=token)
+        await _emit(session_id, "stream_end")
+    except Exception as exc:
+        logger.warning("Streaming reasoning failed: %s — continuing without stream", exc)
+        await _emit(session_id, "stream_end")
 
     try:
         syllabus = await llm.complete_json(
@@ -205,5 +236,5 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
 
     await db.commit()
 
-    await _emit(session_id, "done", session_id=str(session_id))
+    await _emit(session_id, "done", redirect_id=str(session_id))
     logger.info("Research pipeline complete for session %s", session_id)
