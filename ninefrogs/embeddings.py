@@ -6,11 +6,10 @@ Set EMBED_DEVICE=cuda in .env to use GPU (needs ~500MB VRAM).
 from __future__ import annotations
 
 import asyncio
-import logging
+from loguru import logger
 
 from config import settings
 
-logger = logging.getLogger(__name__)
 
 _model = None
 
@@ -31,10 +30,11 @@ async def embed(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
     loop = asyncio.get_event_loop()
-    model = _get_model()
+    # _get_model() may load the model on first call — keep it inside the
+    # executor so it never blocks the asyncio event loop.
     result = await loop.run_in_executor(
         None,
-        lambda: model.encode(texts, normalize_embeddings=True).tolist(),
+        lambda: _get_model().encode(texts, normalize_embeddings=True).tolist(),
     )
     return result
 

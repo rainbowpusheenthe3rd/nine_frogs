@@ -11,7 +11,7 @@ only ever calls LLMClient.complete() / LLMClient.complete_json().
 from __future__ import annotations
 
 import json
-import logging
+from loguru import logger
 from typing import AsyncIterator
 
 from pydantic import BaseModel, ValidationError
@@ -19,7 +19,6 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from config import settings
 
-logger = logging.getLogger(__name__)
 
 
 class LLMClient:

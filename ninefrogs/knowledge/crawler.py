@@ -8,7 +8,7 @@
 """
 from __future__ import annotations
 
-import logging
+from loguru import logger
 import re
 from urllib.parse import urljoin, urlparse
 
@@ -17,7 +17,6 @@ from bs4 import BeautifulSoup
 
 from config import settings
 
-logger = logging.getLogger(__name__)
 
 _STRIP_TAGS = ["nav", "footer", "script", "style", "header", "aside", "form", "noscript"]
 _UA = "NineFrogs/1.0 (educational research tool)"

@@ -9,7 +9,7 @@ For each accepted syllabus section:
 from __future__ import annotations
 
 import asyncio
-import logging
+from loguru import logger
 import uuid
 
 from sqlalchemy import select
@@ -27,7 +27,6 @@ from research.prompts import (
     section_query_user,
 )
 
-logger = logging.getLogger(__name__)
 
 
 # ── entry points ──────────────────────────────────────────────────────────────

@@ -14,23 +14,35 @@ from __future__ import annotations
 
 import asyncio
 import bz2
-import logging
+from loguru import logger
 import pickle
 import re
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import networkx as nx
 
 from config import settings
 
-logger = logging.getLogger(__name__)
+
+# Dedicated single-thread executor — Wikipedia loading never blocks the
+# default executor used by hybrid_search, embeddings, etc.
+_wiki_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="wiki")
 
 # ── module-level singletons ───────────────────────────────────────────────────
 _bm25 = None
 _corpus: list[dict] = []       # [{title, text, idx}]
 _graph: nx.Graph = nx.Graph()
 wiki_ready = asyncio.Event()
+
+# ── observable loading state (polled by /wiki/ready) ─────────────────────────
+wiki_state: dict = {
+    "status": "idle",       # idle | downloading | parsing | indexing | ready | error
+    "pct": 0,               # 0-100
+    "articles": 0,
+    "message": "Not started",
+}
 
 # MediaWiki XML namespace
 _MW_NS = "http://www.mediawiki.org/xml/export-0.11/"
@@ -80,6 +92,9 @@ def _parse_dump(dump_path: Path, max_articles: int) -> tuple:
     page_tag  = f"{{{_MW_NS}}}page"
 
     logger.info("Parsing Wikipedia dump %s …", dump_path)
+    wiki_state["status"] = "parsing"
+    wiki_state["pct"] = 0
+    wiki_state["message"] = "Parsing Wikipedia dump…"
 
     with bz2.open(dump_path, "rb") as fh:
         context = ET.iterparse(fh, events=("end",))
@@ -103,6 +118,10 @@ def _parse_dump(dump_path: Path, max_articles: int) -> tuple:
                     corpus.append({"title": title, "text": clean, "idx": len(corpus)})
 
                     if len(corpus) % 10_000 == 0:
+                        pct = min(90, len(corpus) * 90 // max_articles)
+                        wiki_state["pct"] = pct
+                        wiki_state["articles"] = len(corpus)
+                        wiki_state["message"] = f"Parsing articles… {len(corpus):,} / {max_articles:,}"
                         logger.info("  Parsed %d articles…", len(corpus))
                     if len(corpus) >= max_articles:
                         break
@@ -112,6 +131,9 @@ def _parse_dump(dump_path: Path, max_articles: int) -> tuple:
                 title = text = ns = None
 
     logger.info("Building BM25 index over %s articles…", f"{len(corpus):,}")
+    wiki_state["status"] = "indexing"
+    wiki_state["pct"] = 92
+    wiki_state["message"] = f"Building BM25 index over {len(corpus):,} articles…"
     bm25 = BM25Okapi(tokenized)
     return bm25, corpus
 
@@ -124,13 +146,18 @@ def _download_dump(url: str, dest: Path) -> None:
 
     logger.info("Downloading Wikipedia dump from %s …", url)
     logger.info("This is a ~500 MB file — please wait…")
+    wiki_state["status"] = "downloading"
+    wiki_state["message"] = "Downloading Wikipedia dump (~500 MB)…"
 
     def _report(block_num: int, block_size: int, total_size: int) -> None:
         if total_size > 0 and block_num % 500 == 0:
             pct = min(100, block_num * block_size * 100 // total_size)
+            wiki_state["pct"] = pct
+            wiki_state["message"] = f"Downloading Wikipedia dump… {pct}%"
             logger.info("  Download progress: %d%%", pct)
 
     urllib.request.urlretrieve(url, dest, reporthook=_report)
+    wiki_state["pct"] = 100
     logger.info("Download complete: %s", dest)
 
 
@@ -145,6 +172,9 @@ async def load_wikipedia() -> None:
 
     if not settings.wiki_enabled:
         logger.info("Wikipedia disabled (WIKI_ENABLED=false).")
+        wiki_state["status"] = "ready"
+        wiki_state["pct"] = 100
+        wiki_state["message"] = "Wikipedia disabled."
         wiki_ready.set()
         return
 
@@ -158,22 +188,30 @@ async def load_wikipedia() -> None:
     # ── 1. try pickle cache ───────────────────────────────────────────────────
     if cache_file.exists():
         logger.info("Loading Wikipedia index from cache…")
+        wiki_state["status"] = "parsing"
+        wiki_state["pct"] = 95
+        wiki_state["message"] = "Loading index from cache…"
         try:
             _bm25, _corpus = await loop.run_in_executor(
-                None,
+                _wiki_executor,
                 lambda: pickle.load(open(cache_file, "rb")),  # noqa: SIM115
             )
             logger.info("Loaded %s Wikipedia articles from cache.", f"{len(_corpus):,}")
+            wiki_state["status"] = "ready"
+            wiki_state["pct"] = 100
+            wiki_state["articles"] = len(_corpus)
+            wiki_state["message"] = f"Ready — {len(_corpus):,} articles indexed."
             wiki_ready.set()
             return
         except Exception as exc:
             logger.warning("Cache load failed (%s) — rebuilding.", exc)
+            wiki_state["message"] = f"Cache corrupt — rebuilding… ({exc})"
 
     # ── 2. download dump if not present ──────────────────────────────────────
     if not dump_file.exists():
         try:
             await loop.run_in_executor(
-                None,
+                _wiki_executor,
                 lambda: _download_dump(settings.wiki_dump_url, dump_file),
             )
         except Exception as exc:
@@ -185,20 +223,29 @@ async def load_wikipedia() -> None:
     # ── 3. parse dump + build index ───────────────────────────────────────────
     try:
         _bm25, _corpus = await loop.run_in_executor(
-            None,
+            _wiki_executor,
             lambda: _parse_dump(dump_file, settings.wiki_max_articles),
         )
 
         # Persist cache
+        wiki_state["status"] = "indexing"
+        wiki_state["pct"] = 97
+        wiki_state["message"] = "Writing cache…"
         await loop.run_in_executor(
-            None,
+            _wiki_executor,
             lambda: pickle.dump((_bm25, _corpus), open(cache_file, "wb")),  # noqa: SIM115
         )
         logger.info("Wikipedia index cached to %s.", cache_file)
+        wiki_state["status"] = "ready"
+        wiki_state["pct"] = 100
+        wiki_state["articles"] = len(_corpus)
+        wiki_state["message"] = f"Ready — {len(_corpus):,} articles indexed."
 
     except Exception as exc:
         logger.error("Failed to build Wikipedia index: %s", exc)
         logger.warning("Wikipedia retrieval will be unavailable this session.")
+        wiki_state["status"] = "error"
+        wiki_state["message"] = str(exc)
 
     wiki_ready.set()
 

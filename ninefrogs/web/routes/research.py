@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import logging
+from loguru import logger
 import uuid
 
 from fastapi import APIRouter, Depends, Request
@@ -14,7 +14,6 @@ from web.dependencies import get_db
 from web.templating import templates
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 
 @router.get("/{session_id}")

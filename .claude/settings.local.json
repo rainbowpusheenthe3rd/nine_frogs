@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'd:/Nine Frogs/ninefrogs/research' -name *.pyc -delete)",
+      "Bash(find \"d:/Nine Frogs/ninefrogs\" -name \"*.pyc\" -delete)"
+    ]
+  }
+}

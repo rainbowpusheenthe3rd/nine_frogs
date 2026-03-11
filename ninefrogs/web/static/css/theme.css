@@ -458,6 +458,62 @@ label { display: block; margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--
 }
 .status-text { color: var(--green); font-size: 0.9rem; font-weight: 500; }
 
+/* ── wikipedia loading banner ─────────────────────────────── */
+.wiki-banner {
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 214, 0, 0.25);
+  background: rgba(255, 214, 0, 0.05);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.wiki-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.wiki-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yellow);
+  flex-shrink: 0;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.wiki-banner-msg {
+  font-size: 0.85rem;
+  color: var(--yellow);
+  flex: 1;
+  min-width: 0;
+}
+.wiki-progress-bar {
+  width: 120px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 214, 0, 0.15);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.wiki-progress-fill {
+  height: 100%;
+  background: var(--yellow);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.wiki-banner-pct {
+  font-size: 0.78rem;
+  color: var(--yellow);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  text-align: right;
+}
+.wiki-banner-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.4rem 0 0;
+}
+
 .event-log {
   font-family: var(--font-mono);
   font-size: 0.82rem;

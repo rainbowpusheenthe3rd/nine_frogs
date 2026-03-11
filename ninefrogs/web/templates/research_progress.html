@@ -65,7 +65,11 @@ source.onmessage = (e) => {
   const d = JSON.parse(e.data);
   const icon = ICONS[d.type] || "·";
 
-  if (d.type === "status") {
+  if (d.type === "wiki_loading") {
+    appendLog("log-status",
+      `<span class="log-icon">⧖</span> Knowledge base loading (${d.pct}%) — retrieval available once ready. ${d.message}`);
+
+  } else if (d.type === "status") {
     statusText.textContent = d.message;
     appendLog("log-status", `<span class="log-icon">${icon}</span> ${d.message}`);
 

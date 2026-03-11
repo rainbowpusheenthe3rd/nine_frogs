@@ -12,7 +12,7 @@ Algorithm:
 from __future__ import annotations
 
 import asyncio
-import logging
+from loguru import logger
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +33,6 @@ from research.prompts import (
     syllabus_user,
 )
 
-logger = logging.getLogger(__name__)
 
 _MAX_CONTEXT_CHARS = 10_000
 _RESEARCH_ITERATIONS = 2
@@ -95,12 +94,16 @@ async def run_research(session_id: uuid.UUID) -> None:
 async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None:
     llm = get_llm_client()
 
-    # Wait for Wikipedia index (with generous timeout)
-    await _emit(session_id, "status", message="Waiting for knowledge base…")
-    try:
-        await asyncio.wait_for(wiki_ready.wait(), timeout=360.0)
-    except asyncio.TimeoutError:
-        await _emit(session_id, "status", message="Wikipedia index not ready — using web only")
+    # Check Wikipedia — don't block; proceed immediately and note if unavailable
+    from knowledge.wikipedia import wiki_state
+    if not wiki_ready.is_set():
+        await _emit(
+            session_id, "wiki_loading",
+            message=wiki_state.get("message", "Knowledge base loading…"),
+            pct=wiki_state.get("pct", 0),
+        )
+    else:
+        await _emit(session_id, "status", message="Knowledge base ready.")
 
     # ── Phase 1: iterative query generation + retrieval ───────────────────────
     await _emit(session_id, "status", message="Planning research approach…")
@@ -109,6 +112,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
     all_queries: list[str] = []
 
     for iteration in range(_RESEARCH_ITERATIONS):
+        logger.info("Pipeline [%s] query gen iteration %d…", session_id, iteration)
         try:
             result = await llm.complete_json(
                 messages=[
@@ -119,6 +123,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
                 temperature=0.7,
             )
             new_queries = result.queries[:_QUERIES_PER_ITER]
+            logger.info("Pipeline [%s] iter %d got %d queries", session_id, iteration, len(new_queries))
         except Exception as exc:
             logger.warning("Query generation failed (iter %d): %s", iteration, exc)
             new_queries = [topic] if iteration == 0 else []
@@ -138,6 +143,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
     all_chunks.sort(key=lambda c: c.score, reverse=True)
 
     # ── Phase 2: syllabus synthesis ───────────────────────────────────────────
+    logger.info("Pipeline [%s] starting syllabus synthesis over %d chunks…", session_id, len(all_chunks))
     await _emit(session_id, "status", message="Synthesising syllabus…")
 
     context = _format_context(all_chunks[:_TOP_CHUNKS])
@@ -173,6 +179,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
         await _emit(session_id, "stream_end")
 
     try:
+        logger.info("Pipeline [%s] calling LLM for syllabus JSON…", session_id)
         syllabus = await llm.complete_json(
             messages=[
                 {"role": "system", "content": SYLLABUS_SYSTEM},
@@ -181,6 +188,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
             schema=Syllabus,
             temperature=0.2,
         )
+        logger.info("Pipeline [%s] syllabus received: %d sections", session_id, len(syllabus.sections))
     except Exception as exc:
         raise RuntimeError(f"Syllabus generation failed: {exc}") from exc
 

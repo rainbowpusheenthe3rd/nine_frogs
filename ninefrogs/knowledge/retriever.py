@@ -7,7 +7,8 @@ Results are merged with Reciprocal Rank Fusion before returning.
 """
 from __future__ import annotations
 
-import logging
+import asyncio
+from loguru import logger
 import uuid
 from dataclasses import dataclass, field
 
@@ -17,7 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from embeddings import embed
 from knowledge.wikipedia import bm25_search
 
-logger = logging.getLogger(__name__)
 
 _RRF_K = 60
 
@@ -111,7 +111,10 @@ async def hybrid_search(
     top_k: int = 15,
 ) -> list[RetrievedChunk]:
     """BM25 + pgvector hybrid search with RRF fusion."""
-    bm25_hits = bm25_search(query, top_k=top_k)
+    loop = asyncio.get_event_loop()
+
+    # BM25 scoring is CPU-bound — run in executor so we don't block the event loop
+    bm25_hits = await loop.run_in_executor(None, lambda: bm25_search(query, top_k=top_k))
 
     try:
         vecs = await embed([query])
