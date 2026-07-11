@@ -16,13 +16,27 @@ Links to existing syllabuses resolve to ``linked``; named-but-absent fundamental
 (e.g. ``chemistry`` for biopoly) resolve to ``proposed`` — the backlog of what to
 author next.
 
+Override (bypass the local LLM)
+-------------------------------
+Local 7B/12B models are currently too weak for this nested, grounded generation
+task (qwen2.5:7b hallucinated a generic "Git" course from the biopoly repo). Until
+a stronger syllabus model is wired (see the nine_frogs ROADMAP), set
+
+    NINEFROGS_SYLLABUS_OVERRIDE=<path-to-authored.yaml>
+
+on the run and the tool loads that authored ``RepoSyllabus`` and **skips the LLM
+entirely** — everything downstream (status resolution, write) is unchanged.
+
 CLI
 ---
 python -m research.repo_syllabus --collection biopoly --subject biopoly
+NINEFROGS_SYLLABUS_OVERRIDE=.../authored/biopoly.yaml \
+    python -m research.repo_syllabus --collection biopoly --subject biopoly
 """
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from pathlib import Path
 
@@ -39,6 +53,24 @@ from llm.schemas import RepoSyllabus
 SYLLABUSES_DIR = Path(__file__).parent.parent.parent.parent / "Organiser" / "drills" / "syllabuses"
 
 _CONTEXT_BUDGET = 14_000  # chars of repo context fed to the model
+_OVERRIDE_ENV = "NINEFROGS_SYLLABUS_OVERRIDE"
+
+
+def load_override_syllabus(subject: str) -> RepoSyllabus | None:
+    """If ``NINEFROGS_SYLLABUS_OVERRIDE`` is set, load an authored syllabus from that
+    path and skip the local LLM entirely. Returns None when the env var is unset.
+    """
+    path = os.environ.get(_OVERRIDE_ENV)
+    if not path:
+        return None
+    p = Path(path)
+    if not p.is_file():
+        raise FileNotFoundError(f"{_OVERRIDE_ENV}={path!r} but no such file exists")
+    data = yaml.safe_load(p.read_text(encoding="utf-8"))
+    syllabus = RepoSyllabus.model_validate(data)
+    syllabus.subject = subject
+    logger.info("Using authored syllabus override (local LLM skipped): %s", p)
+    return syllabus
 
 
 # ── context assembly ───────────────────────────────────────────────────────────
@@ -171,8 +203,11 @@ async def _run(collection_name: str, subject: str, out_path: str | None) -> None
     from db.engine import async_session_factory
     import db.models  # noqa: F401
 
-    async with async_session_factory() as db:
-        syllabus = await generate_repo_syllabus(db, collection_name, subject)
+    # Escape hatch: an authored syllabus bypasses the local LLM entirely.
+    syllabus = load_override_syllabus(subject)
+    if syllabus is None:
+        async with async_session_factory() as db:
+            syllabus = await generate_repo_syllabus(db, collection_name, subject)
 
     yaml_text = resolve_and_dump(syllabus)
     out = Path(out_path) if out_path else (SYLLABUSES_DIR / f"{subject}.yaml")

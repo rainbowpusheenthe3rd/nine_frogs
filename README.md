@@ -50,6 +50,14 @@ The generated syllabus **cross-links to science-fundamentals syllabuses** (maths
 physics): each prerequisite resolves to `linked` when that syllabus exists, or `proposed` (an
 "author this next" signal) when it doesn't. Its ML sections seed programming labs.
 
+> **⚠️ Syllabus-generation model quality — to revisit.** The nested, grounded `RepoSyllabus`
+> generation needs a capable model; local 7B/12B models are currently insufficient (qwen2.5:7b
+> hallucinated a generic *"Git"* course from the biopoly repo). Until a stronger syllabus model is
+> wired — Claude via `SYLLABUS_LLM_*`, a better local model, or a decomposed prompt (see
+> [ROADMAP](ROADMAP.md)) — set `NINEFROGS_SYLLABUS_OVERRIDE=<authored.yaml>` on the run to load a
+> hand-authored syllabus and **skip the LLM**. The biopoly course was produced this way
+> (`drills/authored/biopoly.yaml` → the live `drills/syllabuses/biopoly.yaml`).
+
 ### Not in v1 (deliberately out of scope)
 The vision paragraph under *Curriculum Design Philosophy* below describes the full intended system.
 Two parts are **not** wired in v1:

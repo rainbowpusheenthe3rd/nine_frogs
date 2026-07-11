@@ -26,6 +26,14 @@ labs, grounded in a PageRanked code graph and cross-linked to foundational cours
 - **Verify (biopoly):** PageRank top-N are the real core objects (`ModelRegistry`, `Settings`,
   `score_prediction`, `detect_drift`, `ForwardModel`); syllabus spine reflects centrality
 
+> **⚠️ Known issue — syllabus-gen model quality (found on the first live spin, 11 Jul).** Local
+> 7B/12B models hallucinate on the nested, grounded `RepoSyllabus` task — qwen2.5:7b produced a
+> generic *"Git"* course from the biopoly repo (ungrounded, zero cross-links). **Shipped an escape
+> hatch:** `NINEFROGS_SYLLABUS_OVERRIDE=<authored.yaml>` bypasses the LLM and loads a hand-authored
+> syllabus (used to produce the live biopoly course from `drills/authored/biopoly.yaml`). **Fix to
+> revisit:** route syllabus generation to a stronger model (Claude via `SYLLABUS_LLM_*`), and/or
+> decompose the one-shot nested-JSON prompt into per-level calls to make it tractable for local models.
+
 ## Phase 2 — Labs from the graph *(primary)*
 
 - [ ] High-centrality symbols → lab specs; add biopoly labs (model registry, overrideable `BaseSettings`,
