@@ -33,6 +33,10 @@ labs, grounded in a PageRanked code graph and cross-linked to foundational cours
 > syllabus (used to produce the live biopoly course from `drills/authored/biopoly.yaml`). **Fix to
 > revisit:** route syllabus generation to a stronger model (Claude via `SYLLABUS_LLM_*`), and/or
 > decompose the one-shot nested-JSON prompt into per-level calls to make it tractable for local models.
+>
+> **TODO - flashcard-generation quality (same axis).** Card generation still runs on the local
+> qwen2.5:7b (clicking "Generate" on a level works, but cards are rougher than the authored syllabus).
+> Left as-is for now; revisit with the same stronger-model fix.
 
 ## Phase 2 — Labs from the graph *(primary)*
 
@@ -70,6 +74,12 @@ labs, grounded in a PageRanked code graph and cross-linked to foundational cours
 - [ ] `/analytics` view (streaks, cards/day, lab pass-rate per subject, time-on-task, neglected subjects)
 - [ ] Reuse existing telemetry: `CodingAttempt`, `ChallengeProgress` (SM-2, attempts/passes), `Campaign`
 - Local & private (personal tool) — no external telemetry, non-critical by design
+
+## Backlog (polish, non-blocking)
+
+- [ ] **Order subjects sensibly in the drills picker dropdown.** Within a domain, subjects currently
+      appear in arbitrary glob/insertion order; want a deliberate order (fundamentals-first / learning
+      order). Touch `lab/subjects.py::group_by_domain` (sort within each domain) + `drills_picker.html`.
 
 ---
 
