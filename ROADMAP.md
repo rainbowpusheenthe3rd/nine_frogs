@@ -53,6 +53,16 @@ labs, grounded in a PageRanked code graph and cross-linked to foundational cours
 - [ ] The work 142-endpoint FastAPI/Celery/AWS server as the "it generalizes" proof —
       **LOCAL ONLY**, outputs gitignored, never pushed (proprietary; generated content leaks architecture)
 
+## Cross-cutting — lightweight usage analytics *(ships alongside Phase 1)*
+
+- [ ] **Fail-open** `record_event(...)` helper (swallows all errors — never breaks a study/lab session)
+- [ ] Append-only `UsageEvent` table (`ts`, `event_type`, `subject?`, `entity_id?`, `duration_ms?`, JSON
+      `payload`); events: `card_reviewed`, `lab_started/passed/failed`, `syllabus_generated`,
+      `repo_ingested`, `deck_pushed`
+- [ ] `/analytics` view (streaks, cards/day, lab pass-rate per subject, time-on-task, neglected subjects)
+- [ ] Reuse existing telemetry: `CodingAttempt`, `ChallengeProgress` (SM-2, attempts/passes), `Campaign`
+- Local & private (personal tool) — no external telemetry, non-critical by design
+
 ---
 
 ### SOTA anchors (so we build the good version)
@@ -61,3 +71,5 @@ tree-sitter def/ref + PageRank symbol graph ([Aider repo map](https://aider.chat
 graph-grounded understanding ([RepoGraph, ICLR 2025](https://arxiv.org/html/2410.14684v1);
 [Code Graph Models](https://openreview.net/forum?id=b98ODdeYq5)) · code embeddings
 (Qwen3-Embedding / voyage-code-3 / nomic-embed-code — current `bge-base` is general-purpose).
+
+Full dated references: **[CITATIONS.md](CITATIONS.md)**.

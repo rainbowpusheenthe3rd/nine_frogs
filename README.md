@@ -61,8 +61,13 @@ Two parts are **not** wired in v1:
 ## Where this is going
 
 The next chapter makes a **repository** a first-class input: ingest a real codebase and generate a
-grounded syllabus, flashcard decks, and runnable labs over a PageRanked code graph. See
-**[VISION.md](VISION.md)** and the phased **[ROADMAP.md](ROADMAP.md)**.
+grounded syllabus, flashcard decks, and runnable labs over a PageRanked code graph.
+
+> **Nobody combines graph-grounded understanding + spiral pedagogy + persistent SM-2 decks + runnable
+> verified labs + fundamentals cross-links.** That combination is what Nine Frogs is for.
+
+See **[VISION.md](VISION.md)**, the phased **[ROADMAP.md](ROADMAP.md)**, and the dated
+**[CITATIONS.md](CITATIONS.md)**.
 
 ## Running on Windows
 
@@ -435,6 +440,9 @@ The separation matters. An instruction set optimised for LLM consumption will be
 ---
 
 ## Sources and Further Reading
+
+> The full, dated reference list — pedagogy, spaced-repetition, retrieval/ranking, and the code-graph SOTA
+> behind the [roadmap](ROADMAP.md) — lives in **[CITATIONS.md](CITATIONS.md)**. A selection follows.
 
 - Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. *Cognitive Science*, 12(2), 257–285.
 - Kalyuga, S. (2007). Expertise reversal effect and its implications for learner-tailored instruction. *Educational Psychology Review*, 19(4), 509–539.
