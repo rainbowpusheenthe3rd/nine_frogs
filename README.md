@@ -58,6 +58,12 @@ Two parts are **not** wired in v1:
 - **Web crawler** — the code exists (`knowledge/crawler.py`, the `/collections/{id}/ingest/crawl`
   route) but is not part of the v1 flow.
 
+## Where this is going
+
+The next chapter makes a **repository** a first-class input: ingest a real codebase and generate a
+grounded syllabus, flashcard decks, and runnable labs over a PageRanked code graph. See
+**[VISION.md](VISION.md)** and the phased **[ROADMAP.md](ROADMAP.md)**.
+
 ## Running on Windows
 
 A single PowerShell script starts everything: Redis (Docker), Ollama, the Celery worker, and the app.

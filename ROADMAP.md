@@ -1,0 +1,63 @@
+# Nine Frogs — Roadmap
+
+Toward **repo-native Nine Frogs** (see [VISION.md](VISION.md)): ingest a real codebase → syllabus + decks +
+labs, grounded in a PageRanked code graph and cross-linked to foundational courses. Multi-session build.
+
+**Status (July 2026):** Phase 0 shipped. Phase 1 is the next build.
+
+---
+
+## Phase 0 — Repo → syllabus + fundamentals cross-links + seeded labs ✅ *shipped*
+
+- [x] Repo ingester `knowledge/repo.py` (tree walk → ast digest / full source → `ingest_text` → pgvector)
+- [x] `RepoSyllabus` schema + `research/repo_syllabus.py` → drills-style syllabus draft
+- [x] Fundamentals cross-linking: `prerequisites` resolve to `linked` / `proposed` (`lab/subjects.py`)
+- [x] 3 hand-seeded biopoly labs (PSI, register-if-better, distance-to-target) — 20 tests green
+- [x] README rewritten: accurate v1 scope (Wikipedia-slimline + web crawler marked out of scope)
+
+## Phase 1 — Code-understanding foundation *(next — primary)*
+
+- [ ] `knowledge/codegraph.py`: tree-sitter (`grep-ast` / `tree-sitter-language-pack`) → `def`/`ref` tags
+      → dependency graph → **PageRank** (`networkx`, already a dependency)
+- [ ] `CodeSymbol` + `CodeEdge` DB models + Alembic migration; embed symbols with a **code** model
+      (config-selectable, bge-base fallback)
+- [ ] `/graph` route + template — visualise the ranked graph (the demo artifact)
+- [ ] Feed the PageRank-ranked "spine" into `research/repo_syllabus.py`
+- **Verify (biopoly):** PageRank top-N are the real core objects (`ModelRegistry`, `Settings`,
+  `score_prediction`, `detect_drift`, `ForwardModel`); syllabus spine reflects centrality
+
+## Phase 2 — Labs from the graph *(primary)*
+
+- [ ] High-centrality symbols → lab specs; add biopoly labs (model registry, overrideable `BaseSettings`,
+      docker-run overrides, bayesopt vs baseline, seasonal time-series, ClearML)
+- [ ] **External-API mocking** convention (monkeypatch / `moto` / `responses` for boto3/Langfuse/ClearML)
+      so tests never hit real services
+- [ ] Reuse `lab/importer.py`, `lab/runner.py`, `lab/sm2.py`, campaigns; hand-seed first, LLM generator
+      behind a human-review gate
+
+## Phase 3 — Decks (mega + per-subject)
+
+- [ ] Deck routing in the Anki push (`web/routes/anki.py`) → `Repo::Subject` hierarchy
+- [ ] Project-specific cards in `flashcards/generator.py`, grounded in each symbol's graph neighborhood
+      ("how does *this* repo do auth / DB / AWS")
+
+## Phase 4 — Foundational courses
+
+- [ ] Author/generate the compiled courses the cross-links point at, prioritised by **in-degree of
+      `proposed` nodes** (the graph says which to build first: chemistry, physics, async, docker, AWS)
+- [ ] Push the CV-stack labs toward **L9**: FastAPI, Celery, **async**, **docker**, PyTorch, git
+      (async & docker are greenfield; others reach L2–L6 today)
+
+## Phase 5 — Generalize to any repo
+
+- [ ] The work 142-endpoint FastAPI/Celery/AWS server as the "it generalizes" proof —
+      **LOCAL ONLY**, outputs gitignored, never pushed (proprietary; generated content leaks architecture)
+
+---
+
+### SOTA anchors (so we build the good version)
+
+tree-sitter def/ref + PageRank symbol graph ([Aider repo map](https://aider.chat/2023/10/22/repomap.html)) ·
+graph-grounded understanding ([RepoGraph, ICLR 2025](https://arxiv.org/html/2410.14684v1);
+[Code Graph Models](https://openreview.net/forum?id=b98ODdeYq5)) · code embeddings
+(Qwen3-Embedding / voyage-code-3 / nomic-embed-code — current `bge-base` is general-purpose).
