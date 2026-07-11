@@ -1,6 +1,62 @@
 # Nine Frogs
 
-> AI-powered flashcard generation: deep research → spiral syllabus → targeted Anki cards.
+> AI-powered spaced-repetition **and** coding-lab system for engineers with a maths/science bent:
+> deep research → spiral syllabus → targeted Anki cards, plus a LeetCode-style **Labs** environment
+> for a real ML / backend tech stack.
+
+## What it does (v1)
+
+Nine Frogs has two halves that share one syllabus model.
+
+### 1. Syllabus → Flashcards → Anki
+- Give it a **topic**, or point it at an ingested **document collection** or **code repository**.
+- **Deep research:** the LLM generates search queries; retrieval runs over the collection's
+  embeddings in **pgvector**, fused with Reciprocal Rank Fusion.
+- It synthesises a **spiral syllabus** (see the pedagogy below); you **accept / edit / reject** each section.
+- It generates questions per section, then candidate **flashcards** (BM25 + semantic retrieval,
+  reranked); you review each card.
+- Accepted cards **push to Anki** via AnkiConnect.
+
+### 2. Nine Frog Labs — coding challenges
+LeetCode-style, but for a real stack: write code that passes hidden `pytest` suites, timed, in
+isolated runners (subprocess pytest, or an ephemeral **Docker** container for service/app challenges).
+- Challenges come from hand-authored YAML (`drills/exercises/<subject>/lN_*.yaml` + `drills/tests/`)
+  and public datasets (MBPP, HumanEval+, NeetCode / LeetCode).
+- **SM-2 spaced repetition** on challenges; **campaigns** run you through a subject's levels;
+  every attempt is stored for progress and report cards.
+
+Current lab coverage (target is 9 levels per subject):
+
+| Subject | Syllabus | Exercises |
+|---|---|---|
+| FastAPI | ✓ | L2–L6 |
+| Celery | ✓ | L2–L5 |
+| git | ✓ | L2–L4 |
+| PyTorch | — | L2–L4 |
+| RAG | ✓ | L2–L5 |
+| DSA | ✓ | NeetCode / LeetCode datasets |
+| biopoly (repo-generated) | draft | L3–L5 |
+| Async, Docker | — | — *(planned)* |
+
+### Repo → course (new)
+Point the ingester at a repository and it becomes a knowledge collection, then a course:
+
+```bash
+python -m knowledge.repo <path-to-repo> -c <name>        # ingest repo → pgvector collection
+python -m research.repo_syllabus -c <name> -s <subject>  # → drills/syllabuses/<subject>.yaml (draft)
+```
+
+The generated syllabus **cross-links to science-fundamentals syllabuses** (maths / chemistry /
+physics): each prerequisite resolves to `linked` when that syllabus exists, or `proposed` (an
+"author this next" signal) when it doesn't. Its ML sections seed programming labs.
+
+### Not in v1 (deliberately out of scope)
+The vision paragraph under *Curriculum Design Philosophy* below describes the full intended system.
+Two parts are **not** wired in v1:
+- **Wikipedia-slimline ingestion** ("the entirety of Wikipedia into a network graph") — retrieval
+  runs over your **own ingested collections / repos** instead.
+- **Web crawler** — the code exists (`knowledge/crawler.py`, the `/collections/{id}/ingest/crawl`
+  route) but is not part of the v1 flow.
 
 ## Running on Windows
 
@@ -114,13 +170,15 @@ uv run python main.py
 
 ## Persistent Cache
 
-The Wikipedia BM25 index lives in `ninefrogs/.cache/`. Keep this directory across restarts to avoid re-downloading. The PostgreSQL database holds all sessions, embeddings, and approved cards — back it up with standard `pg_dump`.
+The PostgreSQL database holds all sessions, embeddings, approved cards, and Labs progress — back it up with standard `pg_dump`. (A Wikipedia BM25 cache under `ninefrogs/.cache/` is used only if the out-of-scope Wikipedia path is enabled; it is not needed for v1.)
 
 ---
 
 # Nine Frogs — Curriculum Design Philosophy
 
 > *Deep research, generates a candidate syllabus. A human reviews it: accept / edit / reject. A web crawler harvests content. The entirety of Wikipedia-slimline is ingested into a network graph. Embeddings are stored in a vector DB. The LLM generates questions relating to each part of the syllabus in a structured fashion. The LLM generates candidate flashcards using cross-direction reranker against BM25 + semantic distance retrieval. Human-in-the-loop review for candidate cards. Accepted cards go into a deck. Push to Anki via AnkiConnect API.*
+
+> **v1 status:** this paragraph is the *full* vision. The **web crawler** and **Wikipedia-slimline network graph** steps are not wired in v1 (see *Not in v1* at the top) — retrieval runs over your own ingested collections/repos. Everything else — syllabus generation, human review, question and flashcard generation, and the Anki push — is implemented, alongside the Nine Frog Labs system.
 
 This document is the pedagogical foundation for how Nine Frogs designs, generates, and structures syllabi. It is both a philosophy document and — eventually — the basis of the instruction set passed to the LLM when generating curricula.
 
