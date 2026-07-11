@@ -32,11 +32,15 @@ dependencies = [
     "httpx>=0.28.0",
     "beautifulsoup4>=4.12.3",
     "lxml>=5.3.0",
+    # Task queue (Nine Frog Labs)
+    "celery[redis]>=5.4.0",
+    "redis>=5.2.0",
     # Utilities
     "numpy>=2.1.0",
     "tenacity>=9.0.0",
     "aiofiles>=24.1.0",
     "loguru>=0.7.0",
+    "pyyaml>=6.0.2",
 ]
 
 [tool.uv]

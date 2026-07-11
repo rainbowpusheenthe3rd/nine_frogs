@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .lab-header { margin-bottom: 2rem; }
+  .lab-header h1 { font-size: 2rem; color: var(--green); margin-bottom: .25rem; }
+  .lab-header p { color: var(--text-muted); }
+
+  .lab-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  @media (max-width: 900px) { .lab-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .lab-grid { grid-template-columns: 1fr; } }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 2.5rem; font-weight: 700; color: var(--green); font-family: var(--font-mono); }
+  .stat-card .label { color: var(--text-muted); font-size: .9rem; margin-top: .25rem; }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 2rem 0 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .5rem;
+  }
+
+  .campaign-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .campaign-card .meta { flex: 1; }
+  .campaign-card .meta h3 { margin: 0 0 .25rem; font-size: 1rem; color: var(--text); }
+  .campaign-card .meta p { margin: 0; font-size: .85rem; color: var(--text-muted); }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: .75rem; }
+  .progress-bar .fill { height: 100%; background: var(--green); border-radius: 3px; }
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem;
+         border-radius: var(--radius); font-size: .9rem; font-weight: 500; cursor: pointer;
+         text-decoration: none; border: none; }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-green:hover { background: var(--green-dark); }
+  .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--green); color: var(--text); }
+
+  .attempt-row { display: flex; align-items: center; gap: 1rem; padding: .6rem 0;
+                 border-bottom: 1px solid var(--border); font-size: .9rem; }
+  .attempt-row:last-child { border-bottom: none; }
+  .badge { padding: .2rem .6rem; border-radius: 4px; font-size: .78rem; font-weight: 600; font-family: var(--font-mono); }
+  .badge-passed { background: #00e67622; color: var(--green); }
+  .badge-failed  { background: #ff174422; color: var(--red); }
+  .badge-gave_up { background: #ff6d0022; color: var(--orange); }
+  .docker-warn { background: #ff6d0022; border: 1px solid var(--orange); border-radius: var(--radius);
+                 padding: .75rem 1rem; color: var(--orange); font-size: .9rem; margin-bottom: 1.5rem; }
+  .quick-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+</style>
+
+<div class="lab-header">
+  <h1>🧪 Nine Frog Labs</h1>
+  <p>Code challenges, campaigns, and spaced repetition — all in one place.</p>
+</div>
+
+{% if not docker_available %}
+<div class="docker-warn">⚠ Docker not detected — challenges requiring live services are hidden. Start Docker to enable them.</div>
+{% endif %}
+
+<div class="lab-grid">
+  <div class="stat-card">
+    <div class="num">{{ total_challenges }}</div>
+    <div class="label">Total challenges</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color: var(--yellow)">{{ due_count }}</div>
+    <div class="label">Due for review today</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color: var(--blue)">{{ active_campaigns|length }}</div>
+    <div class="label">Active campaigns</div>
+  </div>
+</div>
+
+<div class="quick-actions">
+  <a href="/lab/challenges" class="btn btn-outline">Browse challenges</a>
+  <a href="/lab/review" class="btn {% if due_count > 0 %}btn-green{% else %}btn-outline{% endif %}">
+    Review queue ({{ due_count }} due)
+  </a>
+  <a href="/lab/campaigns" class="btn btn-outline">All campaigns</a>
+  <a href="/lab/report" class="btn btn-outline">Today's report</a>
+</div>
+
+{% if active_campaigns %}
+<div class="section-title">Active campaigns</div>
+{% for c in active_campaigns %}
+  {% set total = c.entries|length %}
+  {% set done = c.entries|selectattr('status', 'ne', 'pending')|list|length %}
+  {% set pct = (done / total * 100)|round|int if total > 0 else 0 %}
+  <div class="campaign-card">
+    <div class="meta">
+      <h3>{{ c.name }}</h3>
+      <p>{{ done }}/{{ total }} challenges · {{ (c.total_time_seconds / 60)|round|int }} min total</p>
+      <div class="progress-bar"><div class="fill" style="width: {{ pct }}%"></div></div>
+    </div>
+    <a href="/lab/campaigns/{{ c.id }}/next" class="btn btn-green">Continue →</a>
+  </div>
+{% endfor %}
+{% else %}
+<div class="section-title">Start a campaign</div>
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem">
+  <p style="margin:0 0 .75rem;font-size:.9rem;color:var(--text-muted)">Choose subjects and topics to build a targeted challenge campaign.</p>
+  <a href="/lab/campaigns" class="btn btn-green">New campaign →</a>
+</div>
+{% endif %}
+
+{% if recent_attempts %}
+<div class="section-title">Recent attempts</div>
+{% for a in recent_attempts %}
+  <div class="attempt-row">
+    <span class="badge badge-{{ a.status }}">{{ a.status }}</span>
+    <span style="color:var(--text);flex:1">{{ a.challenge_id }}</span>
+    <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:.82rem">
+      {% if a.time_spent_seconds %}{{ a.time_spent_seconds }}s{% endif %}
+    </span>
+  </div>
+{% endfor %}
+{% endif %}
+{% endblock %}

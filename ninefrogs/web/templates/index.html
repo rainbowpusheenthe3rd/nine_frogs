@@ -39,8 +39,22 @@
         Research <span class="btn-arrow">→</span>
       </button>
     </div>
+    {% if collections %}
+    <div class="input-row" style="margin-top:0.5rem;">
+      <select name="collection_id" class="topic-input" style="cursor:pointer;">
+        <option value="">Knowledge source: Wikipedia (default)</option>
+        {% for c in collections %}
+        <option value="{{ c.id }}">Collection: {{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <p class="input-hint">
+      {% if collections %}
+      Select a collection to use your own documents, or leave on Wikipedia.
+      {% else %}
       The LLM will iteratively search Wikipedia and generate a syllabus for your review.
+      {% endif %}
     </p>
   </form>
 </div>

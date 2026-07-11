@@ -23,7 +23,7 @@ from db.models import KnowledgeChunk, ResearchSession, SyllabusSection
 from embeddings import embed
 from knowledge.retriever import RetrievedChunk, hybrid_search
 from knowledge.wikipedia import wiki_ready
-from llm.client import get_llm_client
+from llm.client import get_llm_client, get_syllabus_llm_client
 from llm.schemas import ResearchQueries, Syllabus
 from research.events import ResearchEvent, event_store
 from research.prompts import (
@@ -94,6 +94,10 @@ async def run_research(session_id: uuid.UUID) -> None:
 async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None:
     llm = get_llm_client()
 
+    # Load collection_id once — passed to all retrieval calls
+    session_obj = await db.get(ResearchSession, session_id)
+    collection_id = session_obj.collection_id if session_obj else None
+
     # Check Wikipedia — don't block; proceed immediately and note if unavailable
     from knowledge.wikipedia import wiki_state
     if not wiki_ready.is_set():
@@ -132,7 +136,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
 
         for query in new_queries:
             await _emit(session_id, "query", query=query)
-            chunks = await hybrid_search(query, session_id, db, top_k=8)
+            chunks = await hybrid_search(query, session_id, db, top_k=8, collection_id=collection_id)
             all_chunks.extend(chunks)
             titles = [c.title for c in chunks if c.title][:5]
             await _emit(session_id, "retrieved", query=query, count=len(chunks), titles=titles)
@@ -148,11 +152,14 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
 
     context = _format_context(all_chunks[:_TOP_CHUNKS])
 
+    # Use the syllabus-specific LLM if configured (e.g. Claude via Anthropic)
+    syllabus_llm = get_syllabus_llm_client()
+
     # Stream a reasoning preview before JSON generation
     try:
         await _emit(session_id, "stream_start", label="LLM reasoning…")
         reasoning_tokens: list[str] = []
-        stream_iter = llm.complete(
+        stream_iter = syllabus_llm.complete(
             messages=[
                 {"role": "system", "content": SYLLABUS_SYSTEM},
                 {
@@ -180,7 +187,7 @@ async def _pipeline(session_id: uuid.UUID, topic: str, db: AsyncSession) -> None
 
     try:
         logger.info("Pipeline [%s] calling LLM for syllabus JSON…", session_id)
-        syllabus = await llm.complete_json(
+        syllabus = await syllabus_llm.complete_json(
             messages=[
                 {"role": "system", "content": SYLLABUS_SYSTEM},
                 {"role": "user", "content": syllabus_user(topic, context)},

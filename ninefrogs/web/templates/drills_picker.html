@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Drill Flashcards — Nine Frogs{% endblock %}
+
+{% block head %}
+<style>
+.drill-hero {
+  text-align: center;
+  padding: 2rem 0 1.5rem;
+}
+.drill-hero h1 { font-size: 1.8rem; font-weight: 700; }
+.drill-hero p  { color: var(--text-muted, #888); margin-top: 0.4rem; }
+
+.domain-section { margin-top: 2rem; }
+.domain-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+  padding: 0 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--border, #2a2a2a);
+  margin-bottom: 1rem;
+}
+
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.2rem;
+}
+
+.subject-card {
+  background: var(--card-bg, #1a1a1a);
+  border: 1px solid var(--border, #2a2a2a);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+}
+
+.subject-card.is-child {
+  border-left: 3px solid var(--accent, #2a5a2a);
+  margin-left: 1rem;
+}
+
+.subject-card h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.type-badge {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.type-code_heavy   { background: #1a3a1a; color: #6fcf6f; }
+.type-theory_heavy { background: #1a1a3a; color: #6f9fcf; }
+.type-mixed        { background: #2a1a2a; color: #cf9fcf; }
+
+.child-badge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: #1a2a1a;
+  color: #6fcf6f;
+  border: 1px solid #2a5a2a;
+  font-weight: 400;
+}
+
+.prereqs {
+  margin: -0.3rem 0 0.9rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.prereqs .label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.prereq {
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  border: 1px solid transparent;
+}
+.prereq.linked {
+  background: #14261f; color: #6fcfa0; border-color: #2a5a44;
+}
+.prereq.proposed {
+  background: #262014; color: #cfae6f; border-color: #5a4a2a;
+  border-style: dashed;
+}
+
+.level-list { list-style: none; padding: 0; margin: 0; }
+.level-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border, #2a2a2a);
+  font-size: 0.88rem;
+}
+.level-list li:last-child { border-bottom: none; }
+
+.level-num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted, #888);
+  font-size: 0.78rem;
+  min-width: 2rem;
+}
+.level-title { flex: 1; padding: 0 0.6rem; }
+.level-mode {
+  font-size: 0.72rem;
+  color: var(--text-muted, #888);
+  min-width: 4.5rem;
+  text-align: right;
+  font-style: italic;
+}
+
+.gen-btn {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 5px;
+  background: var(--accent, #2a5a2a);
+  color: #eee;
+  border: none;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.gen-btn:hover { background: var(--accent-hover, #3a7a3a); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="drill-hero">
+  <h1>Generate Flashcards from Drill Syllabus</h1>
+  <p>Pick a subject and level — Nine Frogs generates targeted flashcards grounded in the syllabus objectives.</p>
+</section>
+
+{% if grouped %}
+  {% for domain, subjects in grouped.items() %}
+  <div class="domain-section">
+    <div class="domain-label">{{ domain_names[domain] }}</div>
+    <div class="subject-grid">
+      {% for subj_id, subj in subjects.items() %}
+      <div class="subject-card {% if subj.parent %}is-child{% endif %}">
+        <h2>
+          {{ subj.title.split(':')[0] if ':' in subj.title else subj.title }}
+          <span class="type-badge type-{{ subj.type }}">{{ subj.type | replace('_', ' ') }}</span>
+          {% if subj.parent %}
+          <span class="child-badge">↳ {{ subj.parent }}</span>
+          {% endif %}
+        </h2>
+        {% if subj.prerequisites %}
+        <div class="prereqs">
+          <span class="label">Rests on</span>
+          {% for pre in subj.prerequisites %}
+          <span class="prereq {{ pre.status }}"
+                title="{{ pre.why }}{% if pre.status == 'proposed' %} (fundamentals syllabus not yet authored){% endif %}">
+            {{ pre.subject }}{% if pre.levels %} L{{ pre.levels | join(',') }}{% endif %}
+          </span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <ul class="level-list">
+          {% for lvl in subj.levels %}
+          <li>
+            <span class="level-num">L{{ lvl.level }}</span>
+            <span class="level-title">{{ lvl.title }}</span>
+            <span class="level-mode">{{ lvl.mode }}</span>
+            <form action="/drills/generate" method="post" style="display:inline;">
+              <input type="hidden" name="subject" value="{{ subj_id }}">
+              <input type="hidden" name="level" value="{{ lvl.level }}">
+              <button type="submit" class="gen-btn">Generate →</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="card" style="text-align:center; padding: 2rem;">
+  <p>No syllabuses found.</p>
+  <p style="color: var(--text-muted, #888); font-size: 0.9rem; margin-top: 0.5rem;">
+    Expected at: <code>d:/Organiser/drills/syllabuses/*.yaml</code>
+  </p>
+</div>
+{% endif %}
+{% endblock %}

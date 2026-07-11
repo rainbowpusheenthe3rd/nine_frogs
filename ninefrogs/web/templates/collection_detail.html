@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ collection.name }} — Nine Frogs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ collection.name }}</h1>
+  {% if collection.description %}<span class="topic-pill">{{ collection.description }}</span>{% endif %}
+</div>
+
+{% if request.query_params.get('crawling') %}
+<div class="card" style="border-color:var(--accent-cyan);margin-bottom:1rem;">
+  <p style="color:var(--accent-cyan);margin:0;">
+    <span class="pulse-dot"></span> Crawl running in background — refresh to see new documents.
+  </p>
+</div>
+{% endif %}
+
+{% if request.query_params.get('error') %}
+<div class="card" style="border-color:var(--accent-red);margin-bottom:1rem;">
+  <p style="color:var(--accent-red);margin:0;">Error: {{ request.query_params.get('error') }}</p>
+</div>
+{% endif %}
+
+<div class="sections-grid" style="grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+
+  <!-- Stats -->
+  <div class="card">
+    <h3 class="card-title">Stats</h3>
+    <p style="color:var(--text-secondary);margin:0.25rem 0;">{{ documents|length }} document(s) &nbsp;·&nbsp; {{ chunk_count }} chunk(s)</p>
+    <p style="color:var(--text-muted);font-size:0.8rem;margin-top:0.5rem;">Created {{ collection.created_at.strftime('%b %d %Y') }}</p>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="card" style="border-color:rgba(255,80,80,0.3);">
+    <h3 class="card-title" style="color:var(--accent-red);">Danger Zone</h3>
+    <form action="/collections/{{ collection.id }}/delete" method="post" onsubmit="return confirm('Delete this collection and all its documents?')">
+      <button type="submit" class="btn" style="background:rgba(255,80,80,0.15);color:var(--accent-red);border-color:rgba(255,80,80,0.4);">Delete Collection</button>
+    </form>
+  </div>
+</div>
+
+<!-- Ingest forms -->
+<div class="card" style="margin-bottom:2rem;">
+  <h2 class="card-title">Add Documents</h2>
+
+  <details style="margin-bottom:1rem;">
+    <summary class="details-toggle">Paste text</summary>
+    <form action="/collections/{{ collection.id }}/ingest/paste" method="post" style="margin-top:1rem;">
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <input type="text" name="title" class="topic-input" placeholder="Document title" required maxlength="300">
+        <textarea name="content" rows="8" class="topic-input" style="resize:vertical;font-family:var(--font-mono);font-size:0.85rem;" placeholder="Paste raw text here…" required></textarea>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Ingest <span class="btn-arrow">→</span></button>
+      </div>
+    </form>
+  </details>
+
+  <details style="margin-bottom:1rem;">
+    <summary class="details-toggle">Upload file (.txt, .md, .pdf)</summary>
+    <form action="/collections/{{ collection.id }}/ingest/upload" method="post" enctype="multipart/form-data" style="margin-top:1rem;">
+      <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <input type="file" name="file" accept=".txt,.md,.pdf" required style="color:var(--text-primary);">
+        <button type="submit" class="btn btn-primary">Upload <span class="btn-arrow">→</span></button>
+      </div>
+    </form>
+  </details>
+
+  <details>
+    <summary class="details-toggle">Crawl a URL</summary>
+    <form action="/collections/{{ collection.id }}/ingest/crawl" method="post" style="margin-top:1rem;">
+      <div class="input-row">
+        <input type="url" name="seed_url" class="topic-input" placeholder="https://example.com/docs" required>
+        <button type="submit" class="btn btn-primary">Crawl <span class="btn-arrow">→</span></button>
+      </div>
+      <p class="input-hint">Crawls within the same domain, up to {{ config.crawl_max_pages }} pages.</p>
+    </form>
+  </details>
+</div>
+
+<!-- Document list -->
+{% if documents %}
+<section class="recent-section">
+  <h3 class="section-heading">Documents</h3>
+  <div class="sessions-grid">
+    {% for doc in documents %}
+    <div class="session-card" style="cursor:default;">
+      <span class="session-topic">{{ doc.title }}</span>
+      <div class="session-meta">
+        <span class="badge badge-done">{{ doc.source_type }}</span>
+        {% if doc.source_uri %}<span class="session-date" title="{{ doc.source_uri }}">{{ doc.source_uri[:50] }}</span>{% endif %}
+        <span class="session-date">{{ doc.added_at.strftime('%b %d  %H:%M') }}</span>
+      </div>
+      <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);">sha: {{ doc.content_sha[:16] }}…</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<p class="review-hint" style="text-align:center;">No documents yet. Add some above.</p>
+{% endif %}
+{% endblock %}

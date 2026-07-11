@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Collections — Nine Frogs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Document Collections</h1>
+</div>
+
+<div class="card research-form-card">
+  <h2 class="card-title">New Collection</h2>
+  <form action="/collections/new" method="post" class="research-form">
+    <div class="input-row">
+      <input type="text" name="name" class="topic-input" placeholder="Collection name e.g. Senior ML Engineer JDs" required maxlength="200">
+      <button type="submit" class="btn btn-primary">Create <span class="btn-arrow">→</span></button>
+    </div>
+    <div class="input-row" style="margin-top:0.5rem;">
+      <input type="text" name="description" class="topic-input" placeholder="Optional description" maxlength="500">
+    </div>
+  </form>
+</div>
+
+{% if collections %}
+<section class="recent-section">
+  <h3 class="section-heading">Your Collections</h3>
+  <div class="sessions-grid">
+    {% for c in collections %}
+    <a href="/collections/{{ c.id }}" class="session-card">
+      <span class="session-topic">{{ c.name }}</span>
+      <div class="session-meta">
+        {% if c.description %}<span class="session-date">{{ c.description[:60] }}</span>{% endif %}
+        <span class="session-date">{{ c.created_at.strftime('%b %d  %H:%M') }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<p class="review-hint" style="text-align:center;margin-top:2rem;">No collections yet. Create one above.</p>
+{% endif %}
+{% endblock %}

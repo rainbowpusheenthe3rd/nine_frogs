@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} — Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .camp-header { margin-bottom:1.5rem; }
+  .camp-header h1 { font-size:1.5rem; color:var(--text); margin:0 0 .25rem; }
+  .camp-meta { color:var(--text-muted); font-size:.88rem; }
+  .progress-bar { height:8px; background:var(--border); border-radius:4px; margin:1rem 0; }
+  .progress-bar .fill { height:100%; background:var(--green); border-radius:4px; transition: width .3s; }
+  .stats-row { display:flex; gap:2rem; margin-bottom:2rem; font-size:.9rem; }
+  .stats-row .stat { color:var(--text-muted); }
+  .stats-row .stat strong { color:var(--text); display:block; font-size:1.2rem; font-family:var(--font-mono); }
+  .entry-list { display:flex; flex-direction:column; gap:.5rem; }
+  .entry {
+    display:flex; align-items:center; gap:1rem; padding:.75rem 1rem;
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+  }
+  .entry-pos { color:var(--text-dim); font-family:var(--font-mono); font-size:.82rem; width:2rem; flex-shrink:0; }
+  .entry-title { flex:1; color:var(--text); font-size:.9rem; }
+  .badge { padding:.2rem .55rem; border-radius:4px; font-size:.75rem; font-weight:600; font-family:var(--font-mono); }
+  .badge-pending  { background:var(--border); color:var(--text-muted); }
+  .badge-passed   { background:#00e67622; color:var(--green); }
+  .badge-failed   { background:#ff174422; color:var(--red); }
+  .badge-gave_up  { background:#ff6d0022; color:var(--orange); }
+  .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem 1.2rem;
+         border-radius:var(--radius); font-size:.9rem; font-weight:500; cursor:pointer;
+         text-decoration:none; border:none; }
+  .btn-green { background:var(--green); color:#000; }
+  .btn-green:hover { background:var(--green-dark); }
+  .toolbar { display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem; }
+</style>
+
+<a href="/lab" style="color:var(--text-muted);font-size:.85rem;text-decoration:none">← Dashboard</a>
+
+<div class="camp-header" style="margin-top:1rem">
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <h1 id="camp-name-display">{{ campaign.name }}</h1>
+    <button onclick="document.getElementById('rename-row').style.display='flex';this.style.display='none'"
+            style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.82rem;padding:.2rem .4rem;border-radius:4px"
+            id="rename-toggle">✏️ rename</button>
+  </div>
+  <div id="rename-row" style="display:none;align-items:center;gap:.5rem;margin:.4rem 0">
+    <input id="rename-input" type="text" value="{{ campaign.name }}"
+           style="background:var(--bg-input);border:1px solid var(--green);color:var(--text);
+                  padding:.35rem .65rem;border-radius:6px;font-size:.9rem;min-width:260px">
+    <button onclick="renameCampaign()" class="btn btn-green" style="padding:.35rem .8rem;font-size:.85rem">Save</button>
+    <button onclick="document.getElementById('rename-row').style.display='none';document.getElementById('rename-toggle').style.display=''"
+            style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem">Cancel</button>
+  </div>
+  <div class="camp-meta">
+    {% for s in campaign.subjects %}{{ subject_display.get(s, s.replace('_', ' ').title()) }}{% if not loop.last %}, {% endif %}{% endfor %} ·
+    {% with tc = campaign.topic_config or {} %}
+      {% if tc.selections %}
+        {% for sel in tc.selections %}{{ sel.topic or sel.subject }}{% if not loop.last %}, {% endif %}{% endfor %}
+        {% if tc.neetcode_difficulty %} + NeetCode{% endif %} ·
+      {% endif %}
+    {% endwith %}
+    {{ (campaign.total_time_seconds / 60)|round|int }} min total ·
+    {{ campaign.status }}{% if campaign.is_practice %} · <span style="color:var(--yellow)">practice</span>{% endif %}
+  </div>
+</div>
+
+{% set pct = (passed_count / total_count * 100)|round|int if total_count > 0 else 0 %}
+<div class="progress-bar"><div class="fill" style="width:{{ pct }}%"></div></div>
+
+<div class="stats-row">
+  <div class="stat"><strong>{{ passed_count }}</strong> passed</div>
+  <div class="stat"><strong>{{ total_count - passed_count }}</strong> remaining</div>
+  <div class="stat"><strong>{{ pct }}%</strong> complete</div>
+</div>
+
+<div class="toolbar">
+  {% if pending_count > 0 %}
+  <a href="/lab/campaigns/{{ campaign.id }}/next" class="btn btn-green">Continue →</a>
+  {% else %}
+  <span style="color:var(--green);font-weight:600">Campaign complete! 🎉</span>
+  {% endif %}
+  <form method="POST" action="/lab/campaigns/{{ campaign.id }}/delete"
+        onsubmit="return confirm('Delete this campaign and all its entries?')" style="display:inline">
+    <button type="submit" class="btn"
+            style="background:#ff174422;color:var(--red);border:1px solid #ff174455">Delete</button>
+  </form>
+</div>
+
+<div class="entry-list">
+  {% for entry in entries %}
+  {% set ch = challenge_map.get(entry.id|string) %}
+  <div class="entry">
+    <span class="entry-pos">{{ loop.index }}</span>
+    {% if ch %}
+      <span class="entry-title">
+        <a href="/lab/challenges/{{ ch.slug }}?campaign_id={{ campaign.id }}"
+           style="color:var(--text);text-decoration:none">{{ ch.title }}</a>
+      </span>
+    {% else %}
+      <span class="entry-title" style="color:var(--text-muted)">Unknown challenge</span>
+    {% endif %}
+    <span class="badge badge-{{ entry.status }}">{{ entry.status }}</span>
+    {% if entry.time_spent_seconds %}
+    <span style="color:var(--text-dim);font-family:var(--font-mono);font-size:.8rem">{{ entry.time_spent_seconds }}s</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% block scripts %}
+<script>
+async function renameCampaign() {
+  const name = document.getElementById('rename-input').value.trim();
+  if (!name) return;
+  const resp = await fetch('/lab/campaigns/{{ campaign.id }}/rename', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'name=' + encodeURIComponent(name),
+  });
+  if (resp.ok) {
+    document.getElementById('camp-name-display').textContent = name;
+    document.getElementById('rename-row').style.display = 'none';
+    document.getElementById('rename-toggle').style.display = '';
+    document.title = name + ' — Nine Frog Labs';
+  }
+}
+document.getElementById('rename-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') renameCampaign();
+  if (e.key === 'Escape') {
+    document.getElementById('rename-row').style.display = 'none';
+    document.getElementById('rename-toggle').style.display = '';
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}

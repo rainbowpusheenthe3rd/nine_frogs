@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Campaigns — Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+  .page-header h1 { font-size:1.6rem; color:var(--text); margin:0; }
+  .camp-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:1.25rem 1.5rem; margin-bottom:1rem; display:flex; align-items:center; gap:1.5rem;
+  }
+  .meta { flex:1; }
+  .meta h3 { margin:0 0 .25rem; font-size:1rem; color:var(--text); }
+  .meta p { margin:0; font-size:.85rem; color:var(--text-muted); }
+  .progress-bar { height:5px; background:var(--border); border-radius:3px; margin-top:.6rem; }
+  .progress-bar .fill { height:100%; background:var(--green); border-radius:3px; }
+  .badge { padding:.2rem .55rem; border-radius:4px; font-size:.75rem; font-weight:600; }
+  .badge-active    { background:#00e67622; color:var(--green); }
+  .badge-completed { background:#00b0ff22; color:var(--blue); }
+  .badge-abandoned { background:var(--border); color:var(--text-muted); }
+  .badge-practice  { background:#ffd60022; color:var(--yellow); }
+  .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .9rem;
+         border-radius:var(--radius); font-size:.88rem; font-weight:500; cursor:pointer;
+         text-decoration:none; border:none; }
+  .btn-green { background:var(--green); color:#000; }
+  .btn-green:hover { background:var(--green-dark); }
+  .btn-outline { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+  .btn-outline:hover { border-color:var(--green); color:var(--text); }
+  .new-form {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:1.5rem; margin-bottom:2rem;
+  }
+  .new-form h2 { margin:0 0 1rem; font-size:1rem; color:var(--text); }
+  .form-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:flex-end; }
+  .field label { display:block; font-size:.82rem; color:var(--text-muted); margin-bottom:.3rem; }
+  input[type=text] {
+    background:var(--bg-input); border:1px solid var(--border); color:var(--text);
+    padding:.4rem .75rem; border-radius:6px; font-size:.88rem;
+  }
+  input:focus { outline:none; border-color:var(--green); }
+  .empty { text-align:center; color:var(--text-muted); padding:2rem; }
+
+  /* Domain grouping */
+  .domain-group { margin-bottom:.9rem; }
+  .domain-group-label {
+    font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-muted); margin-bottom:.4rem;
+  }
+  .subject-grid { display:flex; flex-wrap:wrap; gap:.4rem; }
+
+  /* Subject chips — Stage 1 */
+  .subject-chip {
+    display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .65rem;
+    border:1px solid var(--border); border-radius:20px; font-size:.8rem; cursor:pointer;
+    color:var(--text-muted); transition:border-color .15s, color .15s, background .15s; user-select:none;
+  }
+  .subject-chip input[type=checkbox] { display:none; }
+  .subject-chip.is-child { border-style:dashed; }
+  /* direct-chip: no topics — checkbox inside drives state */
+  .subject-chip.direct-chip:has(input:checked) { border-color:var(--green); color:var(--text); background:#00e67611; }
+  /* topic-chip-subject: has topics — JS drives state */
+  .subject-chip.active { border-color:var(--green); color:var(--text); background:#00e67611; }
+
+  /* Topic panels — Stage 2 */
+  .topic-panel {
+    background:#0e1e0e; border:1px solid #1e3a1e; border-radius:var(--radius);
+    padding:1rem 1.25rem; margin-bottom:.75rem;
+  }
+  .topic-panel-header { font-size:.82rem; color:var(--text-muted); margin-bottom:.6rem; }
+  .topic-panel-header strong { color:var(--text); }
+  .topic-grid { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .topic-chip {
+    display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .65rem;
+    border:1px solid #2a4a2a; border-radius:20px; font-size:.8rem; cursor:pointer;
+    color:#8ab88a; transition:border-color .15s, color .15s, background .15s; user-select:none;
+  }
+  .topic-chip input[type=checkbox] { display:none; }
+  .topic-chip:has(input:checked) { border-color:var(--green); color:var(--text); background:#00e67611; }
+  .neetcode-chip { border-color:#4a3a00; color:#c9a800; }
+  .neetcode-chip.active { background:#2a2000; border-color:#c9a800; }
+
+  /* NeetCode difficulty row */
+  .nc-diff-row {
+    margin-top:.75rem; padding:.6rem .9rem; border-radius:8px;
+    background:#1a1800; border:1px solid #3a3000;
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap; font-size:.85rem;
+  }
+  .nc-diff-row label { color:var(--text); cursor:pointer; display:flex; align-items:center; gap:.4rem; }
+  .nc-diff-row .nc-label { color:#c9a800; font-size:.8rem; font-weight:600; margin-right:.25rem; }
+</style>
+
+<script>
+function toggleSubject(id) {
+  const chip = document.querySelector('.subject-chip[data-subject="' + id + '"]');
+  const panel = document.getElementById('topics-' + id);
+  if (!panel) return;
+  const isActive = chip.classList.contains('active');
+  chip.classList.toggle('active', !isActive);
+  panel.style.display = isActive ? 'none' : '';
+  if (isActive) {
+    panel.querySelectorAll('input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+    panel.querySelectorAll('.neetcode-chip').forEach(function(el) { el.classList.remove('active'); });
+    updateNeetcodePanel();
+  }
+}
+
+function toggleNeetcode(el) {
+  el.classList.toggle('active');
+  updateNeetcodePanel();
+}
+
+function updateNeetcodePanel() {
+  var anyNc = document.querySelectorAll('.neetcode-chip.active').length > 0;
+  var panel = document.getElementById('nc-difficulty');
+  panel.style.display = anyNc ? '' : 'none';
+  panel.querySelectorAll('input').forEach(function(cb) { cb.disabled = !anyNc; });
+}
+</script>
+
+<div class="page-header">
+  <h1>🏁 Campaigns</h1>
+  <a href="/lab" style="color:var(--text-muted);font-size:.88rem;text-decoration:none">← Dashboard</a>
+</div>
+
+<div class="new-form">
+  <h2>New campaign</h2>
+  <form method="POST" action="/lab/campaigns/create">
+
+    <div class="form-row" style="margin-bottom:1.1rem">
+      <div class="field" style="flex:1;min-width:240px">
+        <label>Campaign name</label>
+        <input name="name" type="text" placeholder="Auto-generated if blank" style="width:100%;box-sizing:border-box">
+      </div>
+    </div>
+
+    <!-- Stage 1: Subject chips -->
+    <div style="margin-bottom:.5rem">
+      <span style="font-size:.82rem;color:var(--text-muted)">Subjects — click to expand topics</span>
+    </div>
+
+    {% if grouped %}
+      {% for domain, subjects in grouped.items() %}
+      <div class="domain-group">
+        <div class="domain-group-label">{{ domain_names[domain] }}</div>
+        <div class="subject-grid">
+          {% for subj_id, subj in subjects.items() %}
+          {% set topics = subject_topics[subj_id] if subj_id in subject_topics else [] %}
+          {% if topics %}
+          <span class="subject-chip {% if subj.parent %}is-child{% endif %}"
+                data-subject="{{ subj_id }}"
+                onclick="toggleSubject('{{ subj_id }}')">
+            {{ subj.title.split(':')[0].strip() if ':' in subj.title else subj.title }}
+            {% if subj.parent %}<span style="opacity:.6;font-size:.7em">↳{{ subj.parent }}</span>{% endif %}
+            <span style="font-size:.65em;opacity:.5">▾</span>
+          </span>
+          {% else %}
+          <label class="subject-chip direct-chip {% if subj.parent %}is-child{% endif %}"
+                 data-subject="{{ subj_id }}">
+            <input type="checkbox" name="topic_sel" value="{{ subj_id }}">
+            {{ subj.title.split(':')[0].strip() if ':' in subj.title else subj.title }}
+            {% if subj.parent %}<span style="opacity:.6;font-size:.7em">↳{{ subj.parent }}</span>{% endif %}
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--text-muted);font-size:.88rem;">No syllabuses found at <code>d:/Organiser/drills/syllabuses/</code></p>
+    {% endif %}
+
+    <!-- Stage 2: Topic panels (revealed per-subject) -->
+    {% for domain, subjects in grouped.items() %}
+    {% for subj_id, subj in subjects.items() %}
+    {% set topics = subject_topics[subj_id] if subj_id in subject_topics else [] %}
+    {% if topics %}
+    <div id="topics-{{ subj_id }}" class="topic-panel" style="display:none">
+      <div class="topic-panel-header">
+        <strong>{{ subj.title.split(':')[0].strip() if ':' in subj.title else subj.title }}</strong>
+        — pick topics to include
+      </div>
+      <div class="topic-grid">
+        <label class="topic-chip">
+          <input type="checkbox" name="topic_sel" value="{{ subj_id }}">
+          All topics
+        </label>
+        {% for t in topics %}
+        <label class="topic-chip">
+          <input type="checkbox" name="topic_sel" value="{{ subj_id }}::{{ t.slug }}">
+          {{ t.display }}
+        </label>
+        {% endfor %}
+        {% if topics | selectattr('neetcode_patterns') | list %}
+        <span class="topic-chip neetcode-chip" onclick="toggleNeetcode(this)">NeetCode ★</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+    <!-- NeetCode difficulty (global — shown when any NeetCode chip is active) -->
+    <div id="nc-difficulty" class="nc-diff-row" style="display:none">
+      <span class="nc-label">NeetCode difficulty:</span>
+      <label><input type="checkbox" name="neetcode_difficulty" value="1" checked disabled style="accent-color:#c9a800"> Easy</label>
+      <label><input type="checkbox" name="neetcode_difficulty" value="2" checked disabled style="accent-color:#c9a800"> Medium</label>
+      <label><input type="checkbox" name="neetcode_difficulty" value="3" disabled style="accent-color:#c9a800"> Hard</label>
+    </div>
+
+    <div class="form-row" style="margin-top:1rem;align-items:center">
+      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.88rem;color:var(--text-muted)">
+        <input type="checkbox" name="is_practice" value="true" style="accent-color:var(--yellow)">
+        Practice mode
+      </label>
+      <button type="submit" class="btn btn-green" style="margin-left:auto">Create →</button>
+    </div>
+
+  </form>
+</div>
+
+{% if campaigns %}
+{% for c in campaigns %}
+  {% set total = c.entries|length %}
+  {% set done = c.entries|selectattr('status', 'ne', 'pending')|list|length %}
+  {% set pct = (done / total * 100)|round|int if total > 0 else 0 %}
+  <div class="camp-card">
+    <div class="meta">
+      <h3>{{ c.name }} <span class="badge badge-{{ c.status }}">{{ c.status }}</span>{% if c.is_practice %} <span class="badge badge-practice">practice</span>{% endif %}</h3>
+      <p>
+        {% with tc = c.topic_config or {} %}
+          {% if tc.selections %}
+            {% for sel in tc.selections %}{{ sel.topic or sel.subject }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% if tc.neetcode_difficulty %} + NeetCode{% endif %}
+          {% else %}
+            {{ c.subjects | join(', ') }}
+          {% endif %}
+        {% endwith %}
+        · {{ done }}/{{ total }} challenges · {{ (c.total_time_seconds / 60)|round|int }} min · last active {{ c.last_active_at.strftime('%d %b') }}
+      </p>
+      <div class="progress-bar"><div class="fill" style="width:{{ pct }}%"></div></div>
+    </div>
+    <a href="/lab/campaigns/{{ c.id }}" class="btn btn-outline">View</a>
+    {% if c.status == 'active' %}
+    <a href="/lab/campaigns/{{ c.id }}/next" class="btn btn-green">Continue →</a>
+    {% endif %}
+  </div>
+{% endfor %}
+{% else %}
+<div class="empty">No campaigns yet. Create one above.</div>
+{% endif %}
+{% endblock %}

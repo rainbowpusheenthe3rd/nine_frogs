@@ -22,22 +22,35 @@ from config import settings
 
 
 class LLMClient:
-    def __init__(self) -> None:
-        if settings.llm_provider in ("ollama", "openai"):
+    def __init__(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> None:
+        provider = provider or settings.llm_provider
+        self._model = model or settings.llm_model
+        self._max_tokens = max_tokens or settings.llm_max_tokens
+        self._temperature = temperature if temperature is not None else settings.llm_temperature
+
+        if provider in ("ollama", "openai"):
             from openai import AsyncOpenAI
 
             self._openai = AsyncOpenAI(
-                base_url=settings.llm_base_url,
-                api_key=settings.llm_api_key,
+                base_url=base_url or settings.llm_base_url,
+                api_key=api_key or settings.llm_api_key,
             )
             self._backend = "openai"
-        elif settings.llm_provider == "anthropic":
+        elif provider == "anthropic":
             from anthropic import AsyncAnthropic
 
-            self._anthropic = AsyncAnthropic(api_key=settings.llm_api_key)
+            self._anthropic = AsyncAnthropic(api_key=api_key or settings.llm_api_key)
             self._backend = "anthropic"
         else:
-            raise ValueError(f"Unknown LLM provider: {settings.llm_provider!r}")
+            raise ValueError(f"Unknown LLM provider: {provider!r}")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -51,15 +64,15 @@ class LLMClient:
         temperature: float | None = None,
         stream: bool = False,
     ) -> str | AsyncIterator[str]:
-        temp = temperature if temperature is not None else settings.llm_temperature
+        temp = temperature if temperature is not None else self._temperature
         if self._backend == "openai":
             if stream:
                 return self._stream_openai(messages, temp)
             resp = await self._openai.chat.completions.create(
-                model=settings.llm_model,
+                model=self._model,
                 messages=messages,
                 temperature=temp,
-                max_tokens=settings.llm_max_tokens,
+                max_tokens=self._max_tokens,
             )
             return resp.choices[0].message.content or ""
         else:
@@ -67,10 +80,10 @@ class LLMClient:
 
     async def _stream_openai(self, messages: list[dict], temperature: float) -> AsyncIterator[str]:
         stream = await self._openai.chat.completions.create(
-            model=settings.llm_model,
+            model=self._model,
             messages=messages,
             temperature=temperature,
-            max_tokens=settings.llm_max_tokens,
+            max_tokens=self._max_tokens,
             stream=True,
         )
         async for chunk in stream:
@@ -82,8 +95,8 @@ class LLMClient:
         system = next((m["content"] for m in messages if m["role"] == "system"), None)
         user_msgs = [m for m in messages if m["role"] != "system"]
         kwargs: dict = dict(
-            model=settings.llm_model,
-            max_tokens=settings.llm_max_tokens,
+            model=self._model,
+            max_tokens=self._max_tokens,
             temperature=temperature,
             messages=user_msgs,
         )
@@ -165,6 +178,7 @@ class LLMClient:
 
 
 _client: LLMClient | None = None
+_syllabus_client: LLMClient | None = None
 
 
 def get_llm_client() -> LLMClient:
@@ -172,3 +186,29 @@ def get_llm_client() -> LLMClient:
     if _client is None:
         _client = LLMClient()
     return _client
+
+
+def get_syllabus_llm_client() -> LLMClient:
+    """Return an LLMClient for syllabus synthesis.
+
+    Uses SYLLABUS_LLM_* settings if configured, otherwise falls back to the
+    default client.  The instance is cached after first creation.
+    """
+    global _syllabus_client
+    if _syllabus_client is not None:
+        return _syllabus_client
+
+    if not settings.syllabus_llm_provider:
+        return get_llm_client()
+
+    _syllabus_client = LLMClient(
+        provider=settings.syllabus_llm_provider,
+        model=settings.syllabus_llm_model,
+        api_key=settings.syllabus_llm_api_key,
+    )
+    logger.info(
+        "Syllabus LLM override: provider=%s model=%s",
+        settings.syllabus_llm_provider,
+        settings.syllabus_llm_model,
+    )
+    return _syllabus_client

@@ -14,6 +14,20 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_max_tokens: int = 4096
 
+    # ── Syllabus LLM override (optional) ──────────────────────────────────────
+    # If set, the syllabus synthesis step uses this provider/model instead of
+    # the default LLM above.  Useful for routing syllabus generation through a
+    # more capable model (e.g. claude-opus-4-6) while keeping Ollama for the
+    # cheaper query-gen and flashcard steps.
+    #
+    # Example .env entries:
+    #   SYLLABUS_LLM_PROVIDER=anthropic
+    #   SYLLABUS_LLM_MODEL=claude-opus-4-6
+    #   SYLLABUS_LLM_API_KEY=sk-ant-...
+    syllabus_llm_provider: Literal["ollama", "openai", "anthropic"] | None = None
+    syllabus_llm_model: str | None = None
+    syllabus_llm_api_key: str | None = None
+
     # ── Embeddings ────────────────────────────────────────────────────────────
     embed_model: str = "BAAI/bge-base-en-v1.5"
     embed_device: str = "cpu"
@@ -40,6 +54,10 @@ class Settings(BaseSettings):
     # ── Crawler ───────────────────────────────────────────────────────────────
     crawl_max_pages: int = 30
     crawl_timeout: int = 10
+
+    # ── Celery (Nine Frog Labs task queue) ───────────────────────────────────
+    celery_broker_url: str = "redis://localhost:6379/1"
+    celery_result_backend: str = "redis://localhost:6379/2"
 
     # ── Web ───────────────────────────────────────────────────────────────────
     web_host: str = "0.0.0.0"

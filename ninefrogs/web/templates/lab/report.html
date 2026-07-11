@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Report Card — Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+  .page-header h1 { font-size:1.6rem; color:var(--text); margin:0; }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:1rem; margin-bottom:2rem; }
+  .stat-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:1.25rem; text-align:center;
+  }
+  .stat-card .num { font-size:2rem; font-weight:700; font-family:var(--font-mono); }
+  .stat-card .label { color:var(--text-muted); font-size:.82rem; margin-top:.2rem; }
+  .section-title {
+    font-size:1rem; font-weight:600; color:var(--text); margin:1.5rem 0 .75rem;
+    border-bottom:1px solid var(--border); padding-bottom:.4rem;
+  }
+  table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  th { text-align:left; color:var(--text-muted); font-weight:500; padding:.4rem .75rem;
+       border-bottom:1px solid var(--border); }
+  td { padding:.5rem .75rem; border-bottom:1px solid var(--border); color:var(--text); }
+  tr:last-child td { border-bottom:none; }
+  .badge { padding:.2rem .55rem; border-radius:4px; font-size:.75rem; font-weight:600; font-family:var(--font-mono); }
+  .badge-passed  { background:#00e67622; color:var(--green); }
+  .badge-failed  { background:#ff174422; color:var(--red); }
+  .badge-gave_up { background:#ff6d0022; color:var(--orange); }
+  .subject-row { display:flex; align-items:center; gap:1rem; padding:.6rem 0;
+                 border-bottom:1px solid var(--border); }
+  .subject-row:last-child { border-bottom:none; }
+  .subject-name { flex:1; color:var(--text); font-weight:500; }
+  .subject-bar { flex:2; height:8px; background:var(--border); border-radius:4px; }
+  .subject-bar .fill { height:100%; background:var(--green); border-radius:4px; }
+  .empty { text-align:center; color:var(--text-muted); padding:3rem; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>📊 Report Card</h1>
+    <span style="color:var(--text-muted);font-size:.88rem">Last 24 hours</span>
+  </div>
+  <a href="/lab" style="color:var(--text-muted);font-size:.88rem;text-decoration:none">← Dashboard</a>
+</div>
+
+{% if total == 0 %}
+<div class="empty">No attempts in the last 24 hours. Go solve some challenges!</div>
+{% else %}
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="num">{{ total }}</div>
+    <div class="label">Attempts</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--green)">{{ passed }}</div>
+    <div class="label">Passed</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--red)">{{ failed }}</div>
+    <div class="label">Failed</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--orange)">{{ gave_up }}</div>
+    <div class="label">Gave up</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--yellow)">{{ pass_rate }}%</div>
+    <div class="label">Pass rate</div>
+  </div>
+  {% if avg_time %}
+  <div class="stat-card">
+    <div class="num" style="color:var(--blue)">{{ avg_time }}s</div>
+    <div class="label">Avg time</div>
+  </div>
+  {% endif %}
+</div>
+
+{% if subject_stats %}
+<div class="section-title">By subject</div>
+{% for subj, stats in subject_stats.items() %}
+{% set rate = (stats.passed / stats.total * 100)|round|int if stats.total > 0 else 0 %}
+<div class="subject-row">
+  <span class="subject-name">{{ subj }}</span>
+  <span style="color:var(--text-muted);font-size:.82rem;font-family:var(--font-mono)">{{ stats.passed }}/{{ stats.total }}</span>
+  <div class="subject-bar"><div class="fill" style="width:{{ rate }}%"></div></div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if attempts %}
+<div class="section-title">All attempts</div>
+<table>
+  <thead>
+    <tr><th>Status</th><th>Time</th><th>Challenge</th></tr>
+  </thead>
+  <tbody>
+    {% for a in attempts %}
+    <tr>
+      <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+      <td style="font-family:var(--font-mono);color:var(--text-muted)">
+        {% if a.time_spent_seconds %}{{ a.time_spent_seconds }}s{% else %}—{% endif %}
+      </td>
+      <td>{{ a.challenge_id }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}

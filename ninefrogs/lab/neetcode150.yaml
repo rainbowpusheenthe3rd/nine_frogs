@@ -1,0 +1,259 @@
+# Neetcode 150 — curated algorithm curriculum for Nine Frog Labs
+#
+# subject: used as campaign filter slug
+# order:   global learning sequence (do arrays before trees)
+# level:   position within pattern (1 = first problem, used with level_min/level_max)
+# lc_id:   LeetCode question_id for dataset lookup
+# difficulty: 1=easy  2=medium  3=hard
+# premium: true = not in public dataset (will be stubbed)
+
+- pattern: arrays_hashing
+  subject: arrays_hashing
+  display: "Arrays & Hashing"
+  order: 1
+  problems:
+    - {lc_id: 217, title: "Contains Duplicate",              difficulty: 1, level: 1}
+    - {lc_id: 242, title: "Valid Anagram",                   difficulty: 1, level: 2}
+    - {lc_id: 1,   title: "Two Sum",                         difficulty: 1, level: 3}
+    - {lc_id: 49,  title: "Group Anagrams",                  difficulty: 2, level: 4}
+    - {lc_id: 347, title: "Top K Frequent Elements",         difficulty: 2, level: 5}
+    - {lc_id: 238, title: "Product of Array Except Self",    difficulty: 2, level: 6}
+    - {lc_id: 36,  title: "Valid Sudoku",                    difficulty: 2, level: 7}
+    - {lc_id: 128, title: "Longest Consecutive Sequence",    difficulty: 2, level: 8}
+
+- pattern: two_pointers
+  subject: two_pointers
+  display: "Two Pointers"
+  order: 2
+  problems:
+    - {lc_id: 125, title: "Valid Palindrome",                difficulty: 1, level: 1}
+    - {lc_id: 167, title: "Two Sum II Input Array Is Sorted",difficulty: 2, level: 2}
+    - {lc_id: 15,  title: "3Sum",                           difficulty: 2, level: 3}
+    - {lc_id: 11,  title: "Container With Most Water",       difficulty: 2, level: 4}
+    - {lc_id: 42,  title: "Trapping Rain Water",            difficulty: 3, level: 5}
+
+- pattern: sliding_window
+  subject: sliding_window
+  display: "Sliding Window"
+  order: 3
+  problems:
+    - {lc_id: 121, title: "Best Time to Buy and Sell Stock",            difficulty: 1, level: 1}
+    - {lc_id: 3,   title: "Longest Substring Without Repeating Characters", difficulty: 2, level: 2}
+    - {lc_id: 424, title: "Longest Repeating Character Replacement",    difficulty: 2, level: 3}
+    - {lc_id: 567, title: "Permutation in String",                      difficulty: 2, level: 4}
+    - {lc_id: 76,  title: "Minimum Window Substring",                   difficulty: 3, level: 5}
+    - {lc_id: 239, title: "Sliding Window Maximum",                     difficulty: 3, level: 6}
+
+- pattern: stack
+  subject: stack
+  display: "Stack"
+  order: 4
+  problems:
+    - {lc_id: 20,  title: "Valid Parentheses",                          difficulty: 1, level: 1}
+    - {lc_id: 155, title: "Min Stack",                                  difficulty: 2, level: 2}
+    - {lc_id: 150, title: "Evaluate Reverse Polish Notation",           difficulty: 2, level: 3}
+    - {lc_id: 22,  title: "Generate Parentheses",                       difficulty: 2, level: 4}
+    - {lc_id: 739, title: "Daily Temperatures",                         difficulty: 2, level: 5}
+    - {lc_id: 853, title: "Car Fleet",                                  difficulty: 2, level: 6}
+    - {lc_id: 84,  title: "Largest Rectangle in Histogram",            difficulty: 3, level: 7}
+
+- pattern: binary_search
+  subject: binary_search
+  display: "Binary Search"
+  order: 5
+  problems:
+    - {lc_id: 704, title: "Binary Search",                              difficulty: 1, level: 1}
+    - {lc_id: 74,  title: "Search a 2D Matrix",                        difficulty: 2, level: 2}
+    - {lc_id: 875, title: "Koko Eating Bananas",                        difficulty: 2, level: 3}
+    - {lc_id: 153, title: "Find Minimum in Rotated Sorted Array",       difficulty: 2, level: 4}
+    - {lc_id: 33,  title: "Search in Rotated Sorted Array",            difficulty: 2, level: 5}
+    - {lc_id: 981, title: "Time Based Key-Value Store",                 difficulty: 2, level: 6}
+    - {lc_id: 4,   title: "Median of Two Sorted Arrays",               difficulty: 3, level: 7}
+
+- pattern: linked_list
+  subject: linked_list
+  display: "Linked List"
+  order: 6
+  problems:
+    - {lc_id: 206, title: "Reverse Linked List",                        difficulty: 1, level: 1}
+    - {lc_id: 21,  title: "Merge Two Sorted Lists",                     difficulty: 1, level: 2}
+    - {lc_id: 141, title: "Linked List Cycle",                          difficulty: 1, level: 3}
+    - {lc_id: 143, title: "Reorder List",                               difficulty: 2, level: 4}
+    - {lc_id: 19,  title: "Remove Nth Node From End of List",           difficulty: 2, level: 5}
+    - {lc_id: 138, title: "Copy List with Random Pointer",              difficulty: 2, level: 6}
+    - {lc_id: 2,   title: "Add Two Numbers",                            difficulty: 2, level: 7}
+    - {lc_id: 287, title: "Find the Duplicate Number",                  difficulty: 2, level: 8}
+    - {lc_id: 146, title: "LRU Cache",                                  difficulty: 2, level: 9}
+    - {lc_id: 23,  title: "Merge k Sorted Lists",                      difficulty: 3, level: 10}
+    - {lc_id: 25,  title: "Reverse Nodes in k-Group",                  difficulty: 3, level: 11}
+
+- pattern: trees
+  subject: trees
+  display: "Trees"
+  order: 7
+  problems:
+    - {lc_id: 226,  title: "Invert Binary Tree",                                        difficulty: 1, level: 1}
+    - {lc_id: 104,  title: "Maximum Depth of Binary Tree",                              difficulty: 1, level: 2}
+    - {lc_id: 543,  title: "Diameter of Binary Tree",                                   difficulty: 1, level: 3}
+    - {lc_id: 110,  title: "Balanced Binary Tree",                                      difficulty: 1, level: 4}
+    - {lc_id: 100,  title: "Same Tree",                                                 difficulty: 1, level: 5}
+    - {lc_id: 572,  title: "Subtree of Another Tree",                                   difficulty: 1, level: 6}
+    - {lc_id: 235,  title: "Lowest Common Ancestor of a Binary Search Tree",            difficulty: 2, level: 7}
+    - {lc_id: 102,  title: "Binary Tree Level Order Traversal",                         difficulty: 2, level: 8}
+    - {lc_id: 199,  title: "Binary Tree Right Side View",                               difficulty: 2, level: 9}
+    - {lc_id: 1448, title: "Count Good Nodes in Binary Tree",                           difficulty: 2, level: 10}
+    - {lc_id: 98,   title: "Validate Binary Search Tree",                               difficulty: 2, level: 11}
+    - {lc_id: 230,  title: "Kth Smallest Element in a BST",                            difficulty: 2, level: 12}
+    - {lc_id: 105,  title: "Construct Binary Tree from Preorder and Inorder Traversal", difficulty: 2, level: 13}
+    - {lc_id: 124,  title: "Binary Tree Maximum Path Sum",                              difficulty: 3, level: 14}
+    - {lc_id: 297,  title: "Serialize and Deserialize Binary Tree",                     difficulty: 3, level: 15}
+
+- pattern: tries
+  subject: tries
+  display: "Tries"
+  order: 8
+  problems:
+    - {lc_id: 208, title: "Implement Trie (Prefix Tree)",                               difficulty: 2, level: 1}
+    - {lc_id: 211, title: "Design Add and Search Words Data Structure",                 difficulty: 2, level: 2}
+    - {lc_id: 212, title: "Word Search II",                                             difficulty: 3, level: 3}
+
+- pattern: heap
+  subject: heap
+  display: "Heap / Priority Queue"
+  order: 9
+  problems:
+    - {lc_id: 703, title: "Kth Largest Element in a Stream",            difficulty: 1, level: 1}
+    - {lc_id: 1046,title: "Last Stone Weight",                          difficulty: 1, level: 2}
+    - {lc_id: 973, title: "K Closest Points to Origin",                 difficulty: 2, level: 3}
+    - {lc_id: 215, title: "Kth Largest Element in an Array",           difficulty: 2, level: 4}
+    - {lc_id: 621, title: "Task Scheduler",                             difficulty: 2, level: 5}
+    - {lc_id: 355, title: "Design Twitter",                             difficulty: 2, level: 6}
+    - {lc_id: 295, title: "Find Median from Data Stream",               difficulty: 3, level: 7}
+
+- pattern: backtracking
+  subject: backtracking
+  display: "Backtracking"
+  order: 10
+  problems:
+    - {lc_id: 78,  title: "Subsets",                                    difficulty: 2, level: 1}
+    - {lc_id: 39,  title: "Combination Sum",                            difficulty: 2, level: 2}
+    - {lc_id: 46,  title: "Permutations",                               difficulty: 2, level: 3}
+    - {lc_id: 90,  title: "Subsets II",                                 difficulty: 2, level: 4}
+    - {lc_id: 40,  title: "Combination Sum II",                         difficulty: 2, level: 5}
+    - {lc_id: 79,  title: "Word Search",                                difficulty: 2, level: 6}
+    - {lc_id: 131, title: "Palindrome Partitioning",                    difficulty: 2, level: 7}
+    - {lc_id: 17,  title: "Letter Combinations of a Phone Number",      difficulty: 2, level: 8}
+    - {lc_id: 51,  title: "N-Queens",                                   difficulty: 3, level: 9}
+
+- pattern: graphs
+  subject: graphs
+  display: "Graphs"
+  order: 11
+  problems:
+    - {lc_id: 200, title: "Number of Islands",                          difficulty: 2, level: 1}
+    - {lc_id: 133, title: "Clone Graph",                                difficulty: 2, level: 2}
+    - {lc_id: 695, title: "Max Area of Island",                         difficulty: 2, level: 3}
+    - {lc_id: 417, title: "Pacific Atlantic Water Flow",                 difficulty: 2, level: 4}
+    - {lc_id: 130, title: "Surrounded Regions",                         difficulty: 2, level: 5}
+    - {lc_id: 994, title: "Rotting Oranges",                            difficulty: 2, level: 6}
+    - {lc_id: 207, title: "Course Schedule",                            difficulty: 2, level: 7}
+    - {lc_id: 210, title: "Course Schedule II",                         difficulty: 2, level: 8}
+    - {lc_id: 684, title: "Redundant Connection",                       difficulty: 2, level: 9}
+    - {lc_id: 127, title: "Word Ladder",                                difficulty: 3, level: 10}
+
+- pattern: advanced_graphs
+  subject: advanced_graphs
+  display: "Advanced Graphs"
+  order: 12
+  problems:
+    - {lc_id: 1584, title: "Min Cost to Connect All Points",            difficulty: 2, level: 1}
+    - {lc_id: 743,  title: "Network Delay Time",                        difficulty: 2, level: 2}
+    - {lc_id: 787,  title: "Cheapest Flights Within K Stops",           difficulty: 2, level: 3}
+    - {lc_id: 332,  title: "Reconstruct Itinerary",                     difficulty: 3, level: 4}
+    - {lc_id: 778,  title: "Swim in Rising Water",                      difficulty: 3, level: 5}
+
+- pattern: dp_1d
+  subject: dp_1d
+  display: "1D Dynamic Programming"
+  order: 13
+  problems:
+    - {lc_id: 70,  title: "Climbing Stairs",                            difficulty: 1, level: 1}
+    - {lc_id: 746, title: "Min Cost Climbing Stairs",                   difficulty: 1, level: 2}
+    - {lc_id: 198, title: "House Robber",                               difficulty: 2, level: 3}
+    - {lc_id: 213, title: "House Robber II",                            difficulty: 2, level: 4}
+    - {lc_id: 5,   title: "Longest Palindromic Substring",             difficulty: 2, level: 5}
+    - {lc_id: 647, title: "Palindromic Substrings",                     difficulty: 2, level: 6}
+    - {lc_id: 91,  title: "Decode Ways",                                difficulty: 2, level: 7}
+    - {lc_id: 322, title: "Coin Change",                                difficulty: 2, level: 8}
+    - {lc_id: 152, title: "Maximum Product Subarray",                   difficulty: 2, level: 9}
+    - {lc_id: 139, title: "Word Break",                                 difficulty: 2, level: 10}
+    - {lc_id: 300, title: "Longest Increasing Subsequence",             difficulty: 2, level: 11}
+    - {lc_id: 416, title: "Partition Equal Subset Sum",                 difficulty: 2, level: 12}
+
+- pattern: dp_2d
+  subject: dp_2d
+  display: "2D Dynamic Programming"
+  order: 14
+  problems:
+    - {lc_id: 62,   title: "Unique Paths",                              difficulty: 2, level: 1}
+    - {lc_id: 1143, title: "Longest Common Subsequence",                difficulty: 2, level: 2}
+    - {lc_id: 309,  title: "Best Time to Buy and Sell Stock with Cooldown", difficulty: 2, level: 3}
+    - {lc_id: 518,  title: "Coin Change II",                            difficulty: 2, level: 4}
+    - {lc_id: 494,  title: "Target Sum",                                difficulty: 2, level: 5}
+    - {lc_id: 97,   title: "Interleaving String",                       difficulty: 2, level: 6}
+    - {lc_id: 329,  title: "Longest Increasing Path in a Matrix",       difficulty: 3, level: 7}
+    - {lc_id: 115,  title: "Distinct Subsequences",                     difficulty: 3, level: 8}
+    - {lc_id: 72,   title: "Edit Distance",                             difficulty: 2, level: 9}
+    - {lc_id: 312,  title: "Burst Balloons",                            difficulty: 3, level: 10}
+    - {lc_id: 10,   title: "Regular Expression Matching",               difficulty: 3, level: 11}
+
+- pattern: greedy
+  subject: greedy
+  display: "Greedy"
+  order: 15
+  problems:
+    - {lc_id: 53,   title: "Maximum Subarray",                          difficulty: 2, level: 1}
+    - {lc_id: 55,   title: "Jump Game",                                 difficulty: 2, level: 2}
+    - {lc_id: 45,   title: "Jump Game II",                              difficulty: 2, level: 3}
+    - {lc_id: 134,  title: "Gas Station",                               difficulty: 2, level: 4}
+    - {lc_id: 846,  title: "Hand of Straights",                         difficulty: 2, level: 5}
+    - {lc_id: 1899, title: "Merge Triplets to Form Target Triplet",     difficulty: 2, level: 6}
+    - {lc_id: 763,  title: "Partition Labels",                          difficulty: 2, level: 7}
+    - {lc_id: 678,  title: "Valid Parenthesis String",                  difficulty: 2, level: 8}
+
+- pattern: intervals
+  subject: intervals
+  display: "Intervals"
+  order: 16
+  problems:
+    - {lc_id: 57,   title: "Insert Interval",                           difficulty: 2, level: 1}
+    - {lc_id: 56,   title: "Merge Intervals",                           difficulty: 2, level: 2}
+    - {lc_id: 435,  title: "Non-overlapping Intervals",                 difficulty: 2, level: 3}
+    - {lc_id: 1851, title: "Minimum Interval to Include Each Query",    difficulty: 3, level: 4}
+
+- pattern: math_geometry
+  subject: math_geometry
+  display: "Math & Geometry"
+  order: 17
+  problems:
+    - {lc_id: 48,   title: "Rotate Image",                              difficulty: 2, level: 1}
+    - {lc_id: 54,   title: "Spiral Matrix",                             difficulty: 2, level: 2}
+    - {lc_id: 73,   title: "Set Matrix Zeroes",                         difficulty: 2, level: 3}
+    - {lc_id: 202,  title: "Happy Number",                              difficulty: 1, level: 4}
+    - {lc_id: 66,   title: "Plus One",                                  difficulty: 1, level: 5}
+    - {lc_id: 50,   title: "Pow(x, n)",                                 difficulty: 2, level: 6}
+    - {lc_id: 43,   title: "Multiply Strings",                          difficulty: 2, level: 7}
+    - {lc_id: 2013, title: "Detect Squares",                            difficulty: 2, level: 8}
+
+- pattern: bit_manipulation
+  subject: bit_manipulation
+  display: "Bit Manipulation"
+  order: 18
+  problems:
+    - {lc_id: 136, title: "Single Number",                              difficulty: 1, level: 1}
+    - {lc_id: 191, title: "Number of 1 Bits",                           difficulty: 1, level: 2}
+    - {lc_id: 338, title: "Counting Bits",                              difficulty: 1, level: 3}
+    - {lc_id: 190, title: "Reverse Bits",                               difficulty: 1, level: 4}
+    - {lc_id: 268, title: "Missing Number",                             difficulty: 1, level: 5}
+    - {lc_id: 371, title: "Sum of Two Integers",                        difficulty: 2, level: 6}
+    - {lc_id: 7,   title: "Reverse Integer",                            difficulty: 2, level: 7}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Challenges — Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+  .page-header h1 { font-size:1.6rem; color:var(--text); margin:0; }
+  .filters { display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .filter-select {
+    background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+    padding: .4rem .75rem; border-radius: 6px; font-size: .88rem; cursor:pointer;
+  }
+  .filter-select:focus { outline: none; border-color: var(--green); }
+  label.toggle { display:flex; align-items:center; gap:.4rem; font-size:.88rem; color:var(--text-muted); cursor:pointer; }
+  .challenge-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:1rem; }
+  .ch-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem; text-decoration:none; display:block; transition: border-color .15s;
+  }
+  .ch-card:hover { border-color: var(--green); }
+  .ch-title { color: var(--text); font-weight:600; font-size:.95rem; margin-bottom:.5rem; }
+  .ch-meta { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.5rem; }
+  .badge { padding:.2rem .55rem; border-radius:4px; font-size:.75rem; font-weight:600; font-family:var(--font-mono); }
+  .badge-easy   { background:#00e67622; color:var(--green); }
+  .badge-medium { background:#ffd60022; color:var(--yellow); }
+  .badge-hard   { background:#ff174422; color:var(--red); }
+  .badge-source { background:#00b0ff22; color:var(--blue); }
+  .badge-docker { background:#ff6d0022; color:var(--orange); }
+  .badge-subject { background:#d500f922; color:var(--purple); }
+  .ch-prompt { color:var(--text-muted); font-size:.82rem; line-height:1.5;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .empty { text-align:center; color:var(--text-muted); padding:3rem; }
+  .count { color:var(--text-muted); font-size:.88rem; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>🧩 Challenges</h1>
+    <span class="count">{{ challenges|length }} shown</span>
+  </div>
+  <a href="/lab" style="color:var(--text-muted);font-size:.88rem;text-decoration:none">← Dashboard</a>
+</div>
+
+<form method="get" class="filters">
+  <select name="subject" class="filter-select" onchange="this.form.submit()">
+    <option value="">All subjects</option>
+    {% for s in subjects %}
+      <option value="{{ s }}" {% if filter_subject == s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select name="difficulty" class="filter-select" onchange="this.form.submit()">
+    <option value="0">All difficulties</option>
+    <option value="1" {% if filter_difficulty == 1 %}selected{% endif %}>Easy</option>
+    <option value="2" {% if filter_difficulty == 2 %}selected{% endif %}>Medium</option>
+    <option value="3" {% if filter_difficulty == 3 %}selected{% endif %}>Hard</option>
+  </select>
+  <select name="source" class="filter-select" onchange="this.form.submit()">
+    <option value="">All sources</option>
+    {% for s in sources %}
+      <option value="{{ s }}" {% if filter_source == s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  {% if not docker_available %}
+  <input type="hidden" name="hide_docker" value="true">
+  {% else %}
+  <label class="toggle">
+    <input type="checkbox" name="hide_docker" value="true" {% if hide_docker %}checked{% endif %} onchange="this.form.submit()">
+    Hide Docker challenges
+  </label>
+  {% endif %}
+</form>
+
+{% if challenges %}
+<div class="challenge-grid">
+  {% for ch in challenges %}
+  {% set diff = diff_label(ch.difficulty) %}
+  <a href="/lab/challenges/{{ ch.slug }}" class="ch-card">
+    <div class="ch-title">{{ ch.title }}</div>
+    <div class="ch-meta">
+      <span class="badge badge-{{ diff }}">{{ diff }}</span>
+      <span class="badge badge-subject">{{ ch.subject }}</span>
+      {% if ch.source != 'drills_yaml' %}<span class="badge badge-source">{{ ch.source }}</span>{% endif %}
+      {% if ch.docker_config %}<span class="badge badge-docker">Docker</span>{% endif %}
+      {% if ch.level %}<span class="badge" style="background:#00b0ff11;color:var(--blue)">L{{ ch.level }}</span>{% endif %}
+    </div>
+    <div class="ch-prompt">{{ ch.prompt[:120] }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">No challenges match your filters.</div>
+{% endif %}
+{% endblock %}

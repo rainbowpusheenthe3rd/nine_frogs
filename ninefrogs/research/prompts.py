@@ -96,12 +96,43 @@ FLASHCARD_SYSTEM = (
     "Answers must be 1-3 sentences, accurate to the source material. Return only JSON."
 )
 
+# Level character descriptions — used to calibrate card depth
+_LEVEL_CHARS = {
+    1: "introductory — define concepts, explain what and why, no assumed expertise",
+    2: "foundational — follow examples, basic application, with reference materials",
+    3: "applied — independent application, common patterns, spotting mistakes",
+    4: "intermediate — combining concepts, reading source code, non-obvious debugging",
+    5: "proficient — production-quality, explain tradeoffs, write from memory",
+    6: "advanced — deep fluency, extend tools, integrate into production systems",
+    7: "research-aware — critique design decisions, read papers, benchmark alternatives",
+    8: "research-level — reproduce published work, design novel solutions, contribute to projects",
+    9: "expert — reconstruct from first principles, contribute to the field",
+}
 
-def flashcard_user(section_title: str, question: str, context_chunks: list[str]) -> str:
+
+def flashcard_user(
+    section_title: str,
+    question: str,
+    context_chunks: list[str],
+    level: int | None = None,
+) -> str:
     ctx = "\n\n".join(f"[{i + 1}] {chunk[:600]}" for i, chunk in enumerate(context_chunks[:4]))
+
+    level_instruction = ""
+    if level is not None:
+        char = _LEVEL_CHARS.get(level, "")
+        level_instruction = (
+            f"\nDepth calibration: This card is for Level {level} learners ({char}). "
+            "Match the card's technical depth accordingly — "
+            "L1-3 cards should define and explain; "
+            "L4-6 cards should test mechanism and tradeoff knowledge; "
+            "L7-9 cards should test research distinctions, implementation details, and edge cases.\n"
+        )
+
     return (
         f"Section: {section_title}\n"
-        f"Question: {question}\n\n"
+        f"Question: {question}\n"
+        f"{level_instruction}\n"
         f"Source material:\n{ctx}\n\n"
         "Create 1-2 Anki flashcards for this question.\n"
         "Rules:\n"

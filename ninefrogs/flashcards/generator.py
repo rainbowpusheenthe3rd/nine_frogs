@@ -34,6 +34,10 @@ from research.prompts import (
 async def generate_for_session(session_id: uuid.UUID) -> None:
     """Generate flashcards for all accepted sections. Background task."""
     async with async_session_factory() as db:
+        from db.models import ResearchSession
+        session_obj = await db.get(ResearchSession, session_id)
+        collection_id = session_obj.collection_id if session_obj else None
+
         result = await db.execute(
             select(SyllabusSection)
             .where(SyllabusSection.session_id == session_id)
@@ -47,7 +51,7 @@ async def generate_for_session(session_id: uuid.UUID) -> None:
             return
 
         for section in sections:
-            await _generate_for_section(section, db)
+            await _generate_for_section(section, db, collection_id=collection_id)
 
         logger.info(
             "Card generation complete for session %s (%d sections)",
@@ -58,7 +62,11 @@ async def generate_for_session(session_id: uuid.UUID) -> None:
 
 # ── per-section generation ────────────────────────────────────────────────────
 
-async def _generate_for_section(section: SyllabusSection, db: AsyncSession) -> None:
+async def _generate_for_section(
+    section: SyllabusSection,
+    db: AsyncSession,
+    collection_id: uuid.UUID | None = None,
+) -> None:
     llm = get_llm_client()
     session_id = section.session_id
 
@@ -92,6 +100,7 @@ async def _generate_for_section(section: SyllabusSection, db: AsyncSession) -> N
             session_id=session_id,
             db=db,
             top_k=6,
+            collection_id=collection_id,
         )
         context_texts = [c.text for c in chunks[:4]]
 
@@ -102,7 +111,12 @@ async def _generate_for_section(section: SyllabusSection, db: AsyncSession) -> N
                     {"role": "system", "content": FLASHCARD_SYSTEM},
                     {
                         "role": "user",
-                        "content": flashcard_user(section.title, question, context_texts),
+                        "content": flashcard_user(
+                            section.title,
+                            question,
+                            context_texts,
+                            level=getattr(section, "drill_level", None),
+                        ),
                     },
                 ],
                 schema=FlashcardBatch,

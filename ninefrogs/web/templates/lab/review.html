@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Review Queue — Nine Frog Labs{% endblock %}
+
+{% block content %}
+<style>
+  .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+  .page-header h1 { font-size:1.6rem; color:var(--text); margin:0; }
+  .queue-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:1.1rem 1.4rem; margin-bottom:.75rem; display:flex; align-items:center; gap:1rem;
+  }
+  .overdue { border-left:3px solid var(--red); }
+  .ch-info { flex:1; }
+  .ch-info h3 { margin:0 0 .2rem; font-size:.95rem; color:var(--text); }
+  .ch-info p  { margin:0; font-size:.82rem; color:var(--text-muted); }
+  .badge { padding:.2rem .55rem; border-radius:4px; font-size:.75rem; font-weight:600; font-family:var(--font-mono); }
+  .badge-easy   { background:#00e67622; color:var(--green); }
+  .badge-medium { background:#ffd60022; color:var(--yellow); }
+  .badge-hard   { background:#ff174422; color:var(--red); }
+  .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .9rem;
+         border-radius:var(--radius); font-size:.88rem; font-weight:500; cursor:pointer;
+         text-decoration:none; border:none; }
+  .btn-green { background:var(--green); color:#000; }
+  .btn-green:hover { background:var(--green-dark); }
+  .empty { text-align:center; color:var(--text-muted); padding:3rem; }
+  .diff-label { font-size:.75rem; color:var(--text-muted); font-family:var(--font-mono); }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>📅 Review Queue</h1>
+    <span style="color:var(--text-muted);font-size:.88rem">{{ due_count }} challenge{{ 's' if due_count != 1 }} due today</span>
+  </div>
+  <a href="/lab" style="color:var(--text-muted);font-size:.88rem;text-decoration:none">← Dashboard</a>
+</div>
+
+{% if challenges %}
+{% for ch, prog in challenges %}
+{% set days_overdue = (today - prog.next_review).days if prog.next_review else 0 %}
+<div class="queue-card {% if days_overdue > 0 %}overdue{% endif %}">
+  <div class="ch-info">
+    <h3>{{ ch.title }}</h3>
+    <p>
+      {{ ch.subject }} ·
+      Due {{ prog.next_review }} {% if days_overdue > 0 %}({{ days_overdue }}d overdue){% endif %} ·
+      {{ prog.total_passes }}/{{ prog.total_attempts }} passed ·
+      EF {{ '%.2f'|format(prog.sm2_ef) }}
+    </p>
+  </div>
+  <a href="/lab/challenges/{{ ch.slug }}" class="btn btn-green">Practice →</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty">
+  <div style="font-size:2rem;margin-bottom:.5rem">✅</div>
+  <div>No challenges due today. Come back tomorrow.</div>
+  <div style="margin-top:1rem"><a href="/lab/challenges" style="color:var(--green)">Browse all challenges</a></div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Pass today's date to template
+  document.querySelectorAll('[data-today]').forEach(el => {
+    el.textContent = new Date().toLocaleDateString();
+  });
+</script>
+{% endblock %}

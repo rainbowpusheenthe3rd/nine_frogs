@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% block title %}{{ challenge.title }} — Nine Frog Labs{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<style>
+  .lab-layout { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; min-height: calc(100vh - 200px); }
+  @media (max-width: 900px) { .lab-layout { grid-template-columns: 1fr; } }
+
+  .problem-panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; overflow-y: auto; max-height: 80vh;
+  }
+  .problem-title { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: .25rem; }
+  .meta-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .badge { padding: .2rem .6rem; border-radius: 4px; font-size: .78rem; font-weight: 600; font-family: var(--font-mono); }
+  .badge-easy   { background: #00e67622; color: var(--green); }
+  .badge-medium { background: #ffd60022; color: var(--yellow); }
+  .badge-hard   { background: #ff174422; color: var(--red); }
+  .badge-source { background: #00b0ff22; color: var(--blue); }
+  .prompt-text { color: var(--text-muted); font-size: .92rem; line-height: 1.65; white-space: pre-wrap; }
+
+  .hint-section { margin-top: 1.5rem; }
+  .hint-section h4 { font-size: .9rem; color: var(--text-muted); margin-bottom: .75rem; }
+  .hint-btn {
+    display: block; width: 100%; text-align: left; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted);
+    padding: .5rem .75rem; margin-bottom: .4rem; cursor: pointer; font-size: .85rem;
+  }
+  .hint-btn:hover { border-color: var(--yellow); color: var(--text); }
+  .hint-text { color: var(--yellow); font-size: .88rem; margin: .4rem 0 .8rem; padding: .5rem .75rem;
+               background: #ffd60011; border-radius: 6px; border-left: 3px solid var(--yellow); }
+
+  .editor-panel { display: flex; flex-direction: column; gap: 1rem; }
+  .editor-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    flex: 1; min-height: 400px;
+  }
+  #monaco-editor { height: 420px; }
+
+  .editor-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+  .timer { font-family: var(--font-mono); color: var(--text-muted); font-size: .9rem; }
+
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.2rem;
+         border-radius: var(--radius); font-size: .9rem; font-weight: 500; cursor: pointer;
+         text-decoration: none; border: none; }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-green:hover { background: var(--green-dark); }
+  .btn-red { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-red:hover { background: #ff174411; }
+  .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+
+  .result-panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem; display: none;
+  }
+  .result-panel.visible { display: block; }
+  .result-panel pre { background: var(--bg-surface); border: 1px solid var(--border);
+                      border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: .82rem;
+                      color: var(--text-muted); max-height: 600px; overflow-y: auto; }
+  .test-list { list-style: none; padding: 0; margin: .75rem 0; display: flex; flex-direction: column; gap: .25rem; }
+  .test-list li { display: flex; align-items: baseline; gap: .6rem; font-size: .85rem; font-family: var(--font-mono); }
+  .test-list li .t-name { color: var(--text-muted); flex: 1; }
+  .test-list li .t-pass { color: var(--green); font-weight: 600; }
+  .test-list li .t-fail { color: var(--red); font-weight: 600; }
+  .raw-toggle { font-size: .8rem; color: var(--text-muted); cursor: pointer; margin-top: .5rem; display: inline-block; }
+  .raw-toggle:hover { color: var(--text); }
+  .result-pass { color: var(--green); font-weight: 700; font-size: 1.1rem; }
+  .result-fail { color: var(--red);   font-weight: 700; font-size: 1.1rem; }
+  .result-meta { color: var(--text-muted); font-size: .85rem; margin-top: .5rem; }
+  .solution-reveal { background: var(--bg-surface); border: 1px solid var(--border);
+                     border-radius: 6px; padding: 1rem; font-size: .82rem; color: var(--text-muted);
+                     max-height: 300px; overflow-y: auto; margin-top: .75rem; }
+  .gave-up-msg { color: var(--orange); font-size: .88rem; margin-top: .5rem; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border);
+             border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sm2-next { color: var(--blue); font-size: .85rem; margin-top: .4rem; }
+  .hints-used { color: var(--text-muted); font-size: .82rem; }
+
+  /* Notes */
+  .notes-section { margin-top: 1.5rem; }
+  .notes-section h4 { font-size: .9rem; color: var(--text-muted); margin: 0 0 .5rem; }
+  .notes-section textarea {
+    width: 100%; min-height: 72px; resize: vertical; box-sizing: border-box;
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: .5rem .65rem; font-size: .84rem; font-family: inherit;
+    line-height: 1.5;
+  }
+  .notes-section textarea:focus { outline: none; border-color: var(--green); }
+  .notes-save-btn {
+    background: none; border: none; color: var(--green); font-size: .8rem;
+    cursor: pointer; padding: 0;
+  }
+  .notes-save-btn:hover { text-decoration: underline; }
+
+  /* Result details toggle */
+  .result-details-toggle {
+    font-size: .82rem; color: var(--text-muted); cursor: pointer; user-select: none;
+    list-style: none; display: inline-block;
+  }
+  .result-details-toggle:hover { color: var(--text); }
+  details[open] .result-details-toggle { color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set diff = diff_label(challenge.difficulty) %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+  <div>
+    {% if campaign %}
+      <a href="/lab/campaigns/{{ campaign.id }}" style="color:var(--text-muted);font-size:.85rem;text-decoration:none">← Campaign</a>
+    {% else %}
+      <a href="/lab/challenges" style="color:var(--text-muted);font-size:.85rem;text-decoration:none">← Challenges</a>
+    {% endif %}
+  </div>
+  <div class="timer" id="timer">0:00</div>
+</div>
+
+<div class="lab-layout">
+  <!-- LEFT: problem panel -->
+  <div class="problem-panel">
+    <div class="problem-title">{{ challenge.title }}</div>
+    <div class="meta-row">
+      <span class="badge badge-{{ diff }}">{{ diff }}</span>
+      <span class="badge badge-source">{{ challenge.source }}</span>
+      {% if challenge.subject %}<span class="badge" style="background:#d500f922;color:var(--purple)">{{ challenge.subject }}</span>{% endif %}
+      {% if challenge.level %}<span class="badge" style="background:#00b0ff11;color:var(--blue)">L{{ challenge.level }}</span>{% endif %}
+    </div>
+    <div class="prompt-text">{{ challenge.prompt }}</div>
+
+    {% if challenge.hints %}
+    <div class="hint-section">
+      <h4>Hints <span class="hints-used" id="hint-count">({{ active_attempt.hints_used if active_attempt else 0 }}/3 used)</span></h4>
+      {% for i in range(1, 4) %}
+        <button
+          class="hint-btn"
+          id="hint-btn-{{ i }}"
+          hx-post="/lab/challenges/{{ challenge.slug }}/hint/{{ i }}"
+          hx-include="#attempt-id-field"
+          hx-target="#hint-text-{{ i }}"
+          hx-swap="innerHTML"
+          {% if active_attempt and active_attempt.hints_used >= i %}style="display:none"{% endif %}
+        >Hint {{ i }} →</button>
+        <div id="hint-text-{{ i }}" class="hint-text" {% if not (active_attempt and active_attempt.hints_used >= i) %}style="display:none"{% endif %}></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="notes-section">
+      <h4>Notes</h4>
+      <textarea id="notes-area"
+        placeholder="Edge cases, constraint gotchas, personal notes…"
+      >{{ progress.notes or '' }}</textarea>
+      <div style="display:flex;align-items:center;gap:.75rem;margin-top:.4rem">
+        <button onclick="saveNotes()" class="notes-save-btn">Save notes</button>
+        <span id="notes-saved" style="display:none"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: editor + result -->
+  <div class="editor-panel">
+    <div class="editor-wrap">
+      <div id="monaco-editor"></div>
+    </div>
+
+    <div class="editor-toolbar">
+      <form id="submit-form" style="display:flex;gap:.75rem;align-items:center">
+        <input type="hidden" id="attempt-id-field" name="attempt_id" value="{{ active_attempt.id if active_attempt else '' }}">
+        <input type="hidden" id="code-field" name="code" value="">
+        <button type="submit" class="btn btn-green" id="submit-btn">▶ Submit</button>
+        <button type="button" class="btn btn-red" id="giveup-btn">Give up</button>
+        {% if campaign %}
+        <a href="/lab/campaigns/{{ campaign.id }}/next" class="btn btn-outline">Next →</a>
+        {% endif %}
+        {% if progress %}
+        <span style="color:var(--text-muted);font-size:.82rem">Next review: {{ progress.next_review or 'never attempted' }}</span>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="result-panel" id="result-panel">
+      <div class="result-summary">
+        <div id="result-status"></div>
+        <div class="result-meta" id="result-meta"></div>
+        <div class="sm2-next" id="sm2-next"></div>
+      </div>
+      <details id="result-details" style="margin-top:.75rem">
+        <summary class="result-details-toggle">▸ Test details</summary>
+        <ul class="test-list" id="test-list"></ul>
+        <pre id="result-output"></pre>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- Give-up output injection point -->
+<div id="giveup-result"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Monaco editor ──────────────────────────────────────────────────────────
+  require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+  let editor;
+  require(['vs/editor/editor.main'], function () {
+    editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+      value: {{ (challenge.starter_code or '')|tojson }},
+      language: {% if challenge.subject == 'rust' %}'rust'{% else %}'python'{% endif %},
+      theme: 'vs-dark',
+      fontSize: 14,
+      fontFamily: 'JetBrains Mono, Fira Code, monospace',
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+    });
+  });
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  let startTime = Date.now();
+  function updateTimer() {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    const m = Math.floor(s / 60);
+    document.getElementById('timer').textContent = m + ':' + String(s % 60).padStart(2, '0');
+  }
+  const timerInterval = setInterval(updateTimer, 1000);
+
+  // ── Start attempt on page load if no active attempt ───────────────────────
+  const attemptIdField = document.getElementById('attempt-id-field');
+  {% if not active_attempt %}
+  fetch('/lab/challenges/{{ challenge.slug }}/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'campaign_id={{ campaign.id if campaign else "" }}',
+  }).then(r => {
+    const url = new URL(r.url);
+    const attemptId = url.searchParams.get('attempt_id');
+    if (attemptId) attemptIdField.value = attemptId;
+  });
+  {% endif %}
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  document.getElementById('submit-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const code = editor.getValue();
+    document.getElementById('code-field').value = code;
+    const attemptId = attemptIdField.value;
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Running…';
+
+    const resp = await fetch('/lab/challenges/{{ challenge.slug }}/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({ attempt_id: attemptId, code }),
+    });
+    const data = await resp.json();
+
+    // Open SSE stream
+    const panel = document.getElementById('result-panel');
+    panel.classList.add('visible');
+    document.getElementById('result-status').innerHTML = '<span class="spinner"></span> Running tests…';
+
+    const es = new EventSource('/lab/attempts/' + data.attempt_id + '/stream');
+    es.onmessage = function(ev) {
+      const d = JSON.parse(ev.data);
+      if (d.status === 'in_progress') return;
+      es.close();
+      btn.disabled = false;
+      btn.innerHTML = '▶ Submit';
+
+      if (d.error) {
+        document.getElementById('result-status').innerHTML = '<span class="result-fail">Error: ' + d.error + '</span>';
+        return;
+      }
+
+      const passed = d.status === 'passed';
+      if (passed) clearInterval(timerInterval);
+      const { passCount, failCount } = renderTestList(d.test_output || '');
+      const total = passCount + failCount;
+      const timeStr = (d.time_spent_seconds || 0) + 's';
+      const countStr = total > 0
+        ? (failCount === 0 ? total + ' test' + (total !== 1 ? 's' : '') : passCount + '/' + total + ' tests passed')
+        : '';
+      document.getElementById('result-status').innerHTML =
+        passed ? '<span class="result-pass">✓ PASSED</span>' : '<span class="result-fail">✗ FAILED</span>';
+      document.getElementById('result-meta').textContent =
+        [countStr, timeStr].filter(Boolean).join(' · ');
+      if (d.next_review) {
+        document.getElementById('sm2-next').textContent = 'Next review: ' + d.next_review;
+      }
+      document.getElementById('result-output').textContent = d.test_output || '';
+    };
+    es.onerror = function() {
+      es.close();
+      btn.disabled = false;
+      btn.innerHTML = '▶ Submit';
+    };
+  });
+
+  // ── Give up ────────────────────────────────────────────────────────────────
+  document.getElementById('giveup-btn').addEventListener('click', async function() {
+    if (!confirm('Give up and see the solution?')) return;
+    const attemptId = attemptIdField.value;
+    const resp = await fetch('/lab/challenges/{{ challenge.slug }}/give-up', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'attempt_id=' + attemptId,
+    });
+    const html = await resp.text();
+    document.getElementById('giveup-result').innerHTML = html;
+    document.getElementById('result-panel').classList.add('visible');
+    document.getElementById('result-status').innerHTML = '<span style="color:var(--orange)">— Gave up —</span>';
+  });
+
+  // ── Test output parser ────────────────────────────────────────────────────
+  function renderTestList(raw) {
+    const list = document.getElementById('test-list');
+    list.innerHTML = '';
+
+    const lines = raw.split('\n');
+    const results = [];
+    for (const line of lines) {
+      const m = line.match(/\s*(test_\S+)\s+(PASSED|FAILED|ERROR)/i)
+             || line.match(/\S+::(test_\S+)\s+(PASSED|FAILED|ERROR)/i);
+      if (!m) continue;
+      results.push({ name: m[1], outcome: m[2].toUpperCase() });
+    }
+
+    // Fallback counts from pytest summary line
+    let passCount = results.filter(r => r.outcome === 'PASSED').length;
+    let failCount = results.filter(r => r.outcome !== 'PASSED').length;
+    if (results.length === 0) {
+      const sm = raw.match(/(\d+) passed/); if (sm) passCount = parseInt(sm[1]);
+      const fm = raw.match(/(\d+) failed/); if (fm) failCount = parseInt(fm[1]);
+    }
+
+    for (const { name, outcome } of results) {
+      const li = document.createElement('li');
+      const cls = outcome === 'PASSED' ? 't-pass' : 't-fail';
+      const icon = outcome === 'PASSED' ? '✓' : '✗';
+      li.innerHTML = `<span class="t-name">${name}</span><span class="${cls}">${icon} ${outcome}</span>`;
+      list.appendChild(li);
+    }
+
+    return { passCount, failCount };
+  }
+
+  // ── Notes ──────────────────────────────────────────────────────────────────
+  async function saveNotes() {
+    const notes = document.getElementById('notes-area').value;
+    const savedEl = document.getElementById('notes-saved');
+    const resp = await fetch('/lab/challenges/{{ challenge.slug }}/notes', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'notes=' + encodeURIComponent(notes),
+    });
+    savedEl.innerHTML = await resp.text();
+    savedEl.style.display = '';
+    setTimeout(() => { savedEl.style.display = 'none'; }, 2500);
+  }
+  document.getElementById('notes-area').addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNotes(); }
+  });
+
+  // ── Reveal hints after use ─────────────────────────────────────────────────
+  document.addEventListener('htmx:afterSwap', function(e) {
+    const target = e.target;
+    if (target && target.classList.contains('hint-text')) {
+      target.style.display = '';
+      const n = target.id.split('-').pop();
+      const btn = document.getElementById('hint-btn-' + n);
+      if (btn) btn.style.display = 'none';
+      const countEl = document.getElementById('hint-count');
+      if (countEl) {
+        const cur = parseInt(countEl.textContent) || 0;
+        countEl.textContent = '(' + Math.max(cur, parseInt(n)) + '/3 used)';
+      }
+    }
+  });
+</script>
+{% endblock %}

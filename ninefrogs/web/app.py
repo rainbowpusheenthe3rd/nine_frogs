@@ -12,7 +12,7 @@ from config import settings
 
 def create_app() -> FastAPI:
     from web.routes import anki as anki_routes
-    from web.routes import cards, index, research, syllabus, wiki
+    from web.routes import cards, collections, drills, index, lab, research, syllabus, wiki
 
     app = FastAPI(title="Nine Frogs", docs_url=None, redoc_url=None)
     app.mount("/static", StaticFiles(directory="web/static"), name="static")
@@ -23,6 +23,9 @@ def create_app() -> FastAPI:
     app.include_router(syllabus.router, prefix="/syllabus")
     app.include_router(cards.router, prefix="/cards")
     app.include_router(anki_routes.router, prefix="/anki")
+    app.include_router(collections.router, prefix="/collections")
+    app.include_router(drills.router, prefix="/drills")
+    app.include_router(lab.router, prefix="/lab")
 
     @app.on_event("startup")
     async def startup() -> None:
