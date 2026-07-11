@@ -3,7 +3,22 @@
 Toward **repo-native Nine Frogs** (see [VISION.md](VISION.md)): ingest a real codebase → syllabus + decks +
 labs, grounded in a PageRanked code graph and cross-linked to foundational courses. Multi-session build.
 
-**Status (July 2026):** Phase 0 shipped. Phase 1 is the next build.
+**Status (July 2026):** Phase 0 shipped. Phase 1 is the next build. Architecture decisions: [DECISIONS.md](DECISIONS.md).
+
+## Resume here (end of 11 Jul session)
+
+- **Run it:** `cd D:\Nine Frogs\ninefrogs; WIKI_ENABLED=false uv run python main.py` → http://localhost:8080
+  (Postgres + Ollama/qwen2.5:7b + bge-base; Wikipedia disabled — biopoly is collection-bound).
+- **biopoly is ingested as FLAT RAG chunks only** — collection `biopoly`, 37 docs / 41 chunks embedded.
+  **No code/network graph exists yet** (no tree-sitter, no PageRank, no `CodeSymbol`/`/graph`). That's
+  Phase 1, unbuilt — the headline next task.
+- **Live now:** biopoly 7-level syllabus in `/drills` (hand-authored via `NINEFROGS_SYLLABUS_OVERRIDE`,
+  cross-links rendering); 3 biopoly labs imported + clickable at `/lab/challenges?subject=biopoly`.
+- **Immediate next (Phase 1):** build `knowledge/codegraph.py` (tree-sitter → def/ref → networkx PageRank)
+  + `CodeSymbol`/`CodeEdge` + `/graph` viz, then feed the ranked spine into `research/repo_syllabus.py`.
+  **Decision to make at kickoff:** code embedding model (local code model vs keep `bge-base`).
+- **Also open:** syllabus + card generation want a stronger model (D5); `drills` folder is not a git repo
+  (authored syllabus + labs unversioned); picker subject ordering (backlog below).
 
 ---
 

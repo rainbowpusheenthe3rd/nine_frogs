@@ -74,8 +74,8 @@ grounded syllabus, flashcard decks, and runnable labs over a PageRanked code gra
 > **Nobody combines graph-grounded understanding + spiral pedagogy + persistent SM-2 decks + runnable
 > verified labs + fundamentals cross-links.** That combination is what Nine Frogs is for.
 
-See **[VISION.md](VISION.md)**, the phased **[ROADMAP.md](ROADMAP.md)**, and the dated
-**[CITATIONS.md](CITATIONS.md)**.
+See **[VISION.md](VISION.md)**, the phased **[ROADMAP.md](ROADMAP.md)**, the architecture
+**[DECISIONS.md](DECISIONS.md)**, and the dated **[CITATIONS.md](CITATIONS.md)**.
 
 ## Running on Windows
 
