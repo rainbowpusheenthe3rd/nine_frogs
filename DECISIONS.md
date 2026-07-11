@@ -52,3 +52,15 @@ squash — verified before push), anon author identity, real dates, no Claude co
 the employer clean conventional-commit devops without touching content or leaking identity. *Status:*
 **shipped.** *Rule going forward:* only ADD conventional commits to either biopoly repo — no force-push /
 history rewrite.
+
+## Curriculum-design principles
+
+**D10 — Low levels are cards; coding labs go at "the wall," not L1.** L1 (and other low levels) teach
+concepts + vocabulary via flashcards (`mode: cards`). A *from-scratch* coding lab at L1 is **inert
+knowledge** for a learner who hasn't hit a felt problem yet, and the wrong instructional format for a
+novice (expertise-reversal + worked-example effect — see CITATIONS). A lab belongs exactly where a
+concept-card set has just built a **wall** the current mental model can't solve — a generation event / the
+spiral's trigger — which is practically ~never L1, sometimes L2, reliably L3+. If a lab is genuinely wanted
+at a low level, use a **completion problem** (blank out one line of a worked example), not blank-page
+(Sweller's completion effect). *Implication for Phases 1–4:* set each syllabus level's `mode` deliberately
+and **do not auto-emit a lab per level.** *Status:* adopted (the biopoly labs correctly start at L3).
